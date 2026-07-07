@@ -24,7 +24,7 @@ export function SplashScreen({ onDone }: { onDone: () => void }) {
     >
       <img
         src={assetUrl('splash.svg')}
-        alt="Тонпа Шенраб"
+        alt="Юнгдрунг Бон"
         className="h-full w-full object-cover"
       />
       <div className="absolute bottom-16 text-center">
