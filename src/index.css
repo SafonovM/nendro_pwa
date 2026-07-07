@@ -1,0 +1,101 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #8B1A1A;
+  --color-accent: #D4A853;
+  --color-bg-light: #FAF5EB;
+  --color-bg-dark: #1A1A2E;
+  --color-surface-light: #FDF8F0;
+  --color-surface-dark: #252540;
+  --color-text: #3C2415;
+  --color-secondary: #2D6A6A;
+  --color-silver: #C0C0C0;
+
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+
+  --radius-card: 16px;
+  --radius-button: 12px;
+}
+
+:root {
+  color-scheme: light;
+  --bg: var(--color-bg-light);
+  --surface: var(--color-surface-light);
+  --text: var(--color-text);
+  --text-muted: #6B5344;
+  --border: #E8DFD0;
+  --shadow: 0 2px 12px rgba(60, 36, 21, 0.08);
+}
+
+.dark {
+  color-scheme: dark;
+  --bg: var(--color-bg-dark);
+  --surface: var(--color-surface-dark);
+  --text: #F5EDE0;
+  --text-muted: #B8A99A;
+  --border: #3A3A55;
+  --shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.card {
+  background: var(--surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: white;
+  border-radius: var(--radius-button);
+  font-family: var(--font-sans);
+  font-weight: 500;
+  transition: opacity 0.15s;
+}
+
+.btn-primary:active {
+  opacity: 0.85;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--color-secondary);
+  border: 1px solid var(--color-secondary);
+  border-radius: var(--radius-button);
+  font-family: var(--font-sans);
+  font-weight: 500;
+}
+
+.splash-fade {
+  animation: splashFade 0.6s ease-out forwards;
+}
+
+@keyframes splashFade {
+  from { opacity: 1; }
+  to { opacity: 0; visibility: hidden; }
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
