@@ -1,32 +1,38 @@
-# React + TypeScript + Vite
+# Дневник практики Юнгдрунг Бон — PWA
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Progressive Web App для учёта практик Нёндро, передач, сновидений и текстов.
 
-Currently, two official plugins are available:
+## Локальная разработка
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## Сборка
+
+```bash
+npm run build
+npm run preview
+```
+
+## Деплой на GitHub Pages
+
+1. Создайте репозиторий на GitHub (например `nendro_pwa`)
+2. Включите Pages: **Settings → Pages → Source: GitHub Actions**
+3. Запушьте ветку `main`:
+
+```bash
+git remote add origin https://github.com/<USER>/nendro_pwa.git
+git push -u origin main
+```
+
+Сайт будет доступен по адресу:
+
+`https://<USER>.github.io/nendro_pwa/`
+
+> Если имя репозитория другое — GitHub Actions подставит его автоматически.
+
+## Установка на телефон
+
+Откройте сайт в Chrome (Android) или Safari (iOS) → «Добавить на главный экран».

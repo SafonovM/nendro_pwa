@@ -1,45 +1,52 @@
 import { useRef } from 'react'
-import { MapPin, Download, Upload, Trash2, Bell } from 'lucide-react'
+import { Download, Upload, Trash2, Bell, Moon } from 'lucide-react'
 import { Header } from '../components/layout/Header'
 import { useSettingsStore, APP_VERSION } from '../store/settingsStore'
-import { useGeolocation } from '../hooks/useGeolocation'
 import { usePracticeStore } from '../store/practiceStore'
 import { useTransmissionStore } from '../store/transmissionStore'
 import { useDreamStore } from '../store/dreamStore'
+import { usePracticeTextStore } from '../store/practiceTextStore'
+import {
+  DREAM_YOGA_SLOTS,
+  DREAM_YOGA_SLOT_LABELS,
+  formatAlarmTime,
+  getSlotTime,
+} from '../lib/dreamYogaSchedule'
+import { requestNotificationPermission } from '../lib/notifications'
 import type { ThemeMode, PractitionerGender } from '../lib/types'
 
 export function Settings() {
-  const {
-    themeMode,
-    latitude,
-    longitude,
-    remindersEnabled,
-    reminderHour,
-    reminderMinute,
-    practitionerGender,
-    setThemeMode,
-    setCoordinates,
-    setReminders,
-    setPractitionerGender,
-    exportData,
-    importData,
-    resetAllData,
-  } = useSettingsStore()
+  const themeMode = useSettingsStore((s) => s.themeMode)
+  const remindersEnabled = useSettingsStore((s) => s.remindersEnabled)
+  const reminderHour = useSettingsStore((s) => s.reminderHour)
+  const reminderMinute = useSettingsStore((s) => s.reminderMinute)
+  const dreamYogaEnabled = useSettingsStore((s) => s.dreamYogaEnabled)
+  const dreamYogaBedtimeHour = useSettingsStore((s) => s.dreamYogaBedtimeHour)
+  const dreamYogaBedtimeMinute = useSettingsStore((s) => s.dreamYogaBedtimeMinute)
+  const dreamYogaWakeHour = useSettingsStore((s) => s.dreamYogaWakeHour)
+  const dreamYogaWakeMinute = useSettingsStore((s) => s.dreamYogaWakeMinute)
+  const dreamYogaBedtimeSlotEnabled = useSettingsStore((s) => s.dreamYogaBedtimeSlotEnabled)
+  const dreamYogaNight1SlotEnabled = useSettingsStore((s) => s.dreamYogaNight1SlotEnabled)
+  const dreamYogaNight2SlotEnabled = useSettingsStore((s) => s.dreamYogaNight2SlotEnabled)
+  const dreamYogaNight3SlotEnabled = useSettingsStore((s) => s.dreamYogaNight3SlotEnabled)
+  const dreamYogaNight4SlotEnabled = useSettingsStore((s) => s.dreamYogaNight4SlotEnabled)
+  const dreamYogaWakeSlotEnabled = useSettingsStore((s) => s.dreamYogaWakeSlotEnabled)
+  const practitionerGender = useSettingsStore((s) => s.practitionerGender)
+  const setThemeMode = useSettingsStore((s) => s.setThemeMode)
+  const setReminders = useSettingsStore((s) => s.setReminders)
+  const setDreamYogaEnabled = useSettingsStore((s) => s.setDreamYogaEnabled)
+  const setDreamYogaTimes = useSettingsStore((s) => s.setDreamYogaTimes)
+  const setDreamYogaSlotEnabled = useSettingsStore((s) => s.setDreamYogaSlotEnabled)
+  const setPractitionerGender = useSettingsStore((s) => s.setPractitionerGender)
+  const exportData = useSettingsStore((s) => s.exportData)
+  const importData = useSettingsStore((s) => s.importData)
+  const resetAllData = useSettingsStore((s) => s.resetAllData)
 
-  const { getCurrentPosition, loading: geoLoading, isSupported } = useGeolocation()
   const loadPractices = usePracticeStore((s) => s.loadPractices)
   const loadTransmissions = useTransmissionStore((s) => s.loadTransmissions)
   const loadDreams = useDreamStore((s) => s.loadDreams)
+  const loadTexts = usePracticeTextStore((s) => s.loadTexts)
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const handleDetectLocation = async () => {
-    try {
-      const pos = await getCurrentPosition()
-      setCoordinates(pos.coords.latitude, pos.coords.longitude)
-    } catch {
-      // error shown via hook
-    }
-  }
 
   const handleExport = async () => {
     const json = await exportData()
@@ -57,31 +64,54 @@ export function Settings() {
     if (!file) return
     const text = await file.text()
     await importData(text)
-    await Promise.all([loadPractices(), loadTransmissions(), loadDreams()])
+    await Promise.all([loadPractices(), loadTransmissions(), loadDreams(), loadTexts()])
     e.target.value = ''
   }
 
   const handleReset = async () => {
     if (confirm('Удалить все данные? Это действие необратимо.')) {
       await resetAllData()
-      await Promise.all([loadPractices(), loadTransmissions(), loadDreams()])
+      await Promise.all([loadPractices(), loadTransmissions(), loadDreams(), loadTexts()])
     }
   }
 
-  const requestNotificationPermission = async () => {
-    if ('Notification' in window) {
-      await Notification.requestPermission()
-    }
+  const handleEnableNotifications = () => {
+    void requestNotificationPermission()
+  }
+
+  const handleRemindersToggle = (checked: boolean) => {
+    setReminders(checked)
+    if (checked) handleEnableNotifications()
+  }
+
+  const handleDreamYogaToggle = (checked: boolean) => {
+    setDreamYogaEnabled(checked)
+    if (checked) handleEnableNotifications()
+  }
+
+  const slotEnabled = {
+    bedtime: dreamYogaBedtimeSlotEnabled,
+    night_1: dreamYogaNight1SlotEnabled,
+    night_2: dreamYogaNight2SlotEnabled,
+    night_3: dreamYogaNight3SlotEnabled,
+    night_4: dreamYogaNight4SlotEnabled,
+    wake: dreamYogaWakeSlotEnabled,
   }
 
   const inputClass =
     'w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 text-sm'
 
+  const dreamYogaSettings = {
+    dreamYogaBedtimeHour,
+    dreamYogaBedtimeMinute,
+    dreamYogaWakeHour,
+    dreamYogaWakeMinute,
+  }
+
   return (
     <>
       <Header title="Настройки" />
       <div className="flex flex-col gap-4 p-4">
-        {/* Theme */}
         <section className="card p-4">
           <h3 className="mb-3 font-medium">Тема</h3>
           <div className="flex gap-2">
@@ -102,9 +132,11 @@ export function Settings() {
           </div>
         </section>
 
-        {/* Gender */}
         <section className="card p-4">
           <h3 className="mb-3 font-medium">Пол практикующего</h3>
+          <p className="mb-3 text-xs text-[var(--text-muted)]">
+            Для визуализаций Ма Три и Ду Три Су
+          </p>
           <div className="flex gap-2">
             {(['male', 'female'] as PractitionerGender[]).map((g) => (
               <button
@@ -123,62 +155,14 @@ export function Settings() {
           </div>
         </section>
 
-        {/* Location */}
-        <section className="card p-4">
-          <h3 className="mb-3 font-medium">Местоположение</h3>
-          <div className="mb-3 grid grid-cols-2 gap-2">
-            <div>
-              <label className="mb-1 block text-xs text-[var(--text-muted)]">Широта</label>
-              <input
-                type="number"
-                step="0.0001"
-                value={latitude ?? ''}
-                onChange={(e) =>
-                  setCoordinates(Number(e.target.value), longitude ?? 0)
-                }
-                className={inputClass}
-                placeholder="55.7558"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs text-[var(--text-muted)]">Долгота</label>
-              <input
-                type="number"
-                step="0.0001"
-                value={longitude ?? ''}
-                onChange={(e) =>
-                  setCoordinates(latitude ?? 0, Number(e.target.value))
-                }
-                className={inputClass}
-                placeholder="37.6173"
-              />
-            </div>
-          </div>
-          {isSupported && (
-            <button
-              type="button"
-              onClick={handleDetectLocation}
-              disabled={geoLoading}
-              className="btn-secondary flex w-full items-center justify-center gap-2 px-4 py-2.5"
-            >
-              <MapPin className="h-4 w-4" />
-              {geoLoading ? 'Определение...' : 'Определить'}
-            </button>
-          )}
-        </section>
-
-        {/* Reminders */}
         <section className="card p-4">
           <h3 className="mb-3 font-medium">Напоминания о практике</h3>
-          <label className="flex items-center gap-3">
+          <label className="flex cursor-pointer items-center gap-3">
             <input
               type="checkbox"
               checked={remindersEnabled}
-              onChange={(e) => {
-                setReminders(e.target.checked)
-                if (e.target.checked) requestNotificationPermission()
-              }}
-              className="h-5 w-5 accent-[var(--color-primary)]"
+              onChange={(e) => handleRemindersToggle(e.target.checked)}
+              className="h-5 w-5 cursor-pointer accent-[var(--color-primary)]"
             />
             <span className="text-sm">Ежедневное напоминание</span>
           </label>
@@ -198,7 +182,88 @@ export function Settings() {
           )}
         </section>
 
-        {/* Export/Import */}
+        <section className="card p-4">
+          <div className="mb-3 flex items-center gap-2">
+            <Moon className="h-5 w-5 text-[var(--color-primary)]" />
+            <h3 className="font-medium">Йога сна</h3>
+          </div>
+          <label className="flex cursor-pointer items-start gap-3">
+            <input
+              type="checkbox"
+              checked={dreamYogaEnabled}
+              onChange={(e) => handleDreamYogaToggle(e.target.checked)}
+              className="mt-0.5 h-5 w-5 cursor-pointer accent-[var(--color-primary)]"
+            />
+            <div>
+              <span className="text-sm font-medium">Ночные будильники</span>
+              <p className="mt-0.5 text-xs text-[var(--text-muted)]">
+                Выберите, какие напоминания включить
+              </p>
+            </div>
+          </label>
+
+          {dreamYogaEnabled && (
+            <div className="mt-4 flex flex-col gap-3 border-t border-[var(--border)] pt-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-[var(--text-muted)]">
+                Расписание
+              </p>
+
+              {DREAM_YOGA_SLOTS.map((slot) => {
+                const enabled = slotEnabled[slot]
+                const time = getSlotTime(dreamYogaSettings, slot)
+                const isTimeSlot = slot === 'bedtime' || slot === 'wake'
+
+                return (
+                  <div key={slot} className="rounded-xl border border-[var(--border)] p-3">
+                    <label className="flex cursor-pointer items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={enabled}
+                          onChange={(e) => setDreamYogaSlotEnabled(slot, e.target.checked)}
+                          className="h-5 w-5 cursor-pointer accent-[var(--color-primary)]"
+                        />
+                        <div>
+                          <span className="text-sm">{DREAM_YOGA_SLOT_LABELS[slot]}</span>
+                          {time && (
+                            <p className="text-xs tabular-nums text-[var(--text-muted)]">
+                              {formatAlarmTime(time)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </label>
+                    {isTimeSlot && (
+                      <div className="mt-2 pl-8">
+                        <input
+                          type="time"
+                          value={
+                            slot === 'bedtime'
+                              ? `${String(dreamYogaBedtimeHour).padStart(2, '0')}:${String(dreamYogaBedtimeMinute).padStart(2, '0')}`
+                              : `${String(dreamYogaWakeHour).padStart(2, '0')}:${String(dreamYogaWakeMinute).padStart(2, '0')}`
+                          }
+                          onChange={(e) => {
+                            const [h, m] = e.target.value.split(':').map(Number)
+                            if (slot === 'bedtime') {
+                              setDreamYogaTimes({ h, m }, { h: dreamYogaWakeHour, m: dreamYogaWakeMinute })
+                            } else {
+                              setDreamYogaTimes(
+                                { h: dreamYogaBedtimeHour, m: dreamYogaBedtimeMinute },
+                                { h, m },
+                              )
+                            }
+                          }}
+                          className={inputClass}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </section>
+
         <section className="card p-4">
           <h3 className="mb-3 font-medium">Резервная копия</h3>
           <div className="flex flex-col gap-2">
@@ -228,7 +293,6 @@ export function Settings() {
           </div>
         </section>
 
-        {/* Reset */}
         <section className="card p-4">
           <button
             type="button"

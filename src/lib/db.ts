@@ -40,11 +40,29 @@ export interface Dream {
   isSignificant: boolean
 }
 
+export interface PracticeText {
+  id?: number
+  title: string
+  category: string
+  description?: string
+  fileName?: string
+  mimeType?: string
+  createdAt: Date
+}
+
+export interface PracticeTextFile {
+  id?: number
+  practiceTextId: number
+  blob: Blob
+}
+
 export class YungdrungDB extends Dexie {
   practices!: Table<Practice>
   practiceSessions!: Table<PracticeSession>
   transmissions!: Table<Transmission>
   dreams!: Table<Dream>
+  practiceTexts!: Table<PracticeText>
+  practiceTextFiles!: Table<PracticeTextFile>
 
   constructor() {
     super('yungdrungDiary')
@@ -53,6 +71,14 @@ export class YungdrungDB extends Dexie {
       practiceSessions: '++id, practiceId, date',
       transmissions: '++id, date, type',
       dreams: '++id, date, category',
+    })
+    this.version(2).stores({
+      practices: '++id, category, createdAt',
+      practiceSessions: '++id, practiceId, date',
+      transmissions: '++id, date, type',
+      dreams: '++id, date, category',
+      practiceTexts: '++id, title, category, createdAt, fileName',
+      practiceTextFiles: '++id, practiceTextId',
     })
   }
 }

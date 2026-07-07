@@ -1,11 +1,14 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Trash2 } from 'lucide-react'
 import { Header } from '../components/layout/Header'
 import { PracticeCounter } from '../components/practice/PracticeCounter'
+import { PracticeVisualizationSection } from '../components/practice/PracticeVisualizationSection'
 import { ProgressBar } from '../components/ui/ProgressBar'
 import { usePracticeStore, getPracticeStats } from '../store/practiceStore'
+import { useSettingsStore } from '../store/settingsStore'
 import { PRACTICE_CATEGORY_LABELS } from '../lib/types'
+import { hasVisualization, resolveVisualization } from '../lib/practiceVisualization'
 
 export function PracticeDetail() {
   const { id } = useParams<{ id: string }>()
@@ -14,9 +17,15 @@ export function PracticeDetail() {
   const loadPractices = usePracticeStore((s) => s.loadPractices)
   const incrementCount = usePracticeStore((s) => s.incrementCount)
   const deletePractice = usePracticeStore((s) => s.deletePractice)
+  const practitionerGender = useSettingsStore((s) => s.practitionerGender)
 
   const practiceId = Number(id)
   const practice = practices.find((p) => p.id === practiceId)
+
+  const visualization = useMemo(() => {
+    if (!practice || !hasVisualization(practice.category)) return null
+    return resolveVisualization(practice.category, practitionerGender)
+  }, [practice, practitionerGender])
 
   useEffect(() => {
     loadPractices()
@@ -56,6 +65,12 @@ export function PracticeDetail() {
       </div>
 
       <div className="px-4 py-6">
+        {visualization && (
+          <div className="mb-4">
+            <PracticeVisualizationSection visualization={visualization} />
+          </div>
+        )}
+
         <PracticeCounter
           count={practice.completedCount}
           onIncrement={() => incrementCount(practiceId)}

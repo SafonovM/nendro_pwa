@@ -3,8 +3,8 @@ import { BottomNav } from './BottomNav'
 
 export function AppShell() {
   return (
-    <div className="flex min-h-full flex-col">
-      <main className="flex-1 pb-20">
+    <div className="flex h-full min-h-0 flex-col">
+      <main className="min-h-0 flex-1 overflow-y-auto pb-20">
         <Outlet />
       </main>
       <BottomNav />

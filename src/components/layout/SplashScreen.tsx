@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { assetUrl } from '../../lib/assetUrl'
 import { useSettingsStore } from '../../store/settingsStore'
 
 export function SplashScreen({ onDone }: { onDone: () => void }) {
@@ -22,7 +23,7 @@ export function SplashScreen({ onDone }: { onDone: () => void }) {
       className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#1A3A6B] ${fade ? 'splash-fade' : ''}`}
     >
       <img
-        src="/splash.svg"
+        src={assetUrl('splash.svg')}
         alt="Тонпа Шенраб"
         className="h-full w-full object-cover"
       />
