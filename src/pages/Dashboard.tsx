@@ -7,7 +7,7 @@ export function Dashboard() {
     <>
       <Header
         showLogo
-        title="Дневник практики Юнгдрунг Бон"
+        title="Дневник практик Юнгдрунг Бон"
         showSettings
       />
       <div className="px-4 py-4">
