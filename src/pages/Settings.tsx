@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { Download, Upload, Trash2, Bell, Moon } from 'lucide-react'
+import { Download, Upload, Bell, Moon } from 'lucide-react'
 import { Header } from '../components/layout/Header'
 import { useSettingsStore, APP_VERSION } from '../store/settingsStore'
 import { usePracticeStore } from '../store/practiceStore'
@@ -40,7 +40,6 @@ export function Settings() {
   const setPractitionerGender = useSettingsStore((s) => s.setPractitionerGender)
   const exportData = useSettingsStore((s) => s.exportData)
   const importData = useSettingsStore((s) => s.importData)
-  const resetAllData = useSettingsStore((s) => s.resetAllData)
 
   const loadPractices = usePracticeStore((s) => s.loadPractices)
   const loadTransmissions = useTransmissionStore((s) => s.loadTransmissions)
@@ -74,13 +73,6 @@ export function Settings() {
       alert(err instanceof Error ? err.message : 'Ошибка импорта')
     }
     e.target.value = ''
-  }
-
-  const handleReset = async () => {
-    if (confirm('Удалить все данные? Это действие необратимо.')) {
-      await resetAllData()
-      await Promise.all([loadPractices(), loadTransmissions(), loadDreams(), loadTexts()])
-    }
   }
 
   const handleEnableNotifications = () => {
@@ -301,19 +293,9 @@ export function Settings() {
           </div>
         </section>
 
-        <section className="card p-4">
-          <button
-            type="button"
-            onClick={handleReset}
-            className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-red-600"
-          >
-            <Trash2 className="h-4 w-4" />
-            Сбросить все данные
-          </button>
-          <p className="mt-3 text-center text-xs text-[var(--text-muted)]">
-            Версия {APP_VERSION}
-          </p>
-        </section>
+        <p className="pb-4 text-center text-xs text-[var(--text-muted)]">
+          Версия {APP_VERSION}
+        </p>
       </div>
     </>
   )
