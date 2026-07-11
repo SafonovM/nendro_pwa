@@ -3,7 +3,8 @@ import { useSettingsStore } from '../store/settingsStore'
 import { checkAlarms } from '../lib/alarmScheduler'
 import {
   showSystemNotification,
-  vibrateForAlarm,
+  startAlarmFeedback,
+  stopAlarmFeedback,
   type ActiveAlarm,
 } from '../lib/notifications'
 
@@ -14,7 +15,7 @@ export function useAlarmScheduler() {
     const settings = useSettingsStore.getState()
     const due = checkAlarms(settings)
     for (const alarm of due) {
-      vibrateForAlarm(alarm.kind)
+      startAlarmFeedback(alarm.kind)
       showSystemNotification(alarm)
       setActiveAlarm(alarm)
     }
@@ -38,7 +39,10 @@ export function useAlarmScheduler() {
     }
   }, [processAlarms])
 
-  const dismissAlarm = useCallback(() => setActiveAlarm(null), [])
+  const dismissAlarm = useCallback(() => {
+    stopAlarmFeedback()
+    setActiveAlarm(null)
+  }, [])
 
   return { activeAlarm, dismissAlarm }
 }

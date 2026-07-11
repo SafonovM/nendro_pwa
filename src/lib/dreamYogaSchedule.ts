@@ -15,6 +15,13 @@ export const DREAM_YOGA_SLOTS: DreamYogaSlot[] = [
   'wake',
 ]
 
+export const NIGHT_DREAM_YOGA_SLOTS = DREAM_YOGA_SLOTS.filter(
+  (slot): slot is Extract<DreamYogaSlot, 'night_1' | 'night_2' | 'night_3' | 'night_4'> =>
+    slot.startsWith('night_'),
+)
+
+export const BOUNDARY_DREAM_YOGA_SLOTS = ['bedtime', 'wake'] as const
+
 export const DREAM_YOGA_SLOT_LABELS: Record<DreamYogaSlot, string> = {
   bedtime: 'Отход ко сну',
   night_1: 'Ночное пробуждение 1',

@@ -1,5 +1,7 @@
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { ActiveAlarm } from '../../lib/notifications'
+import { startAlarmFeedback, stopAlarmFeedback } from '../../lib/notifications'
 
 interface AlarmOverlayProps {
   alarm: ActiveAlarm
@@ -9,7 +11,18 @@ interface AlarmOverlayProps {
 export function AlarmOverlay({ alarm, onDismiss }: AlarmOverlayProps) {
   const navigate = useNavigate()
 
+  useEffect(() => {
+    startAlarmFeedback(alarm.kind)
+    return () => stopAlarmFeedback()
+  }, [alarm.kind])
+
+  const handleDismiss = () => {
+    stopAlarmFeedback()
+    onDismiss()
+  }
+
   const handleAction = () => {
+    stopAlarmFeedback()
     onDismiss()
     if (alarm.kind === 'practice') {
       navigate('/practices')
@@ -19,7 +32,10 @@ export function AlarmOverlay({ alarm, onDismiss }: AlarmOverlayProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--color-bg-dark)]/95 p-6">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--color-bg-dark)]/95 p-6"
+      onPointerDown={() => startAlarmFeedback(alarm.kind)}
+    >
       <div className="card w-full max-w-sm p-6 text-center">
         <h2 className="font-display text-2xl font-bold text-[var(--color-primary)]">
           {alarm.title}
@@ -32,7 +48,7 @@ export function AlarmOverlay({ alarm, onDismiss }: AlarmOverlayProps) {
           <button type="button" onClick={handleAction} className="btn-primary px-4 py-3">
             {alarm.kind === 'practice' ? 'К практике' : 'Записать сон'}
           </button>
-          <button type="button" onClick={onDismiss} className="btn-secondary px-4 py-3">
+          <button type="button" onClick={handleDismiss} className="btn-secondary px-4 py-3">
             {alarm.kind === 'practice' ? 'Отложить' : 'Продолжить сон'}
           </button>
         </div>

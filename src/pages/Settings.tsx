@@ -7,12 +7,14 @@ import { useTransmissionStore } from '../store/transmissionStore'
 import { useDreamStore } from '../store/dreamStore'
 import { usePracticeTextStore } from '../store/practiceTextStore'
 import {
-  DREAM_YOGA_SLOTS,
+  BOUNDARY_DREAM_YOGA_SLOTS,
   DREAM_YOGA_SLOT_LABELS,
+  NIGHT_DREAM_YOGA_SLOTS,
   formatAlarmTime,
   getSlotTime,
 } from '../lib/dreamYogaSchedule'
 import { requestNotificationPermission } from '../lib/notifications'
+import { unlockAlarmAudio } from '../lib/alarmSound'
 import type { ThemeMode, PractitionerGender } from '../lib/types'
 
 export function Settings() {
@@ -77,6 +79,7 @@ export function Settings() {
 
   const handleEnableNotifications = () => {
     void requestNotificationPermission()
+    void unlockAlarmAudio()
   }
 
   const handleRemindersToggle = (checked: boolean) => {
@@ -197,69 +200,115 @@ export function Settings() {
             <div>
               <span className="text-sm font-medium">Ночные будильники</span>
               <p className="mt-0.5 text-xs text-[var(--text-muted)]">
-                Выберите, какие напоминания включить
+                Выберите, какие напоминания включить. На iPhone звук работает, если PWA установлена на экран
+                «Домой» и разрешены уведомления.
               </p>
             </div>
           </label>
 
           {dreamYogaEnabled && (
-            <div className="mt-4 flex flex-col gap-3 border-t border-[var(--border)] pt-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-[var(--text-muted)]">
-                Расписание
-              </p>
+            <div className="mt-4 flex flex-col gap-4 border-t border-[var(--border)] pt-4">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-[var(--text-muted)]">
+                  Время сна
+                </p>
+                <p className="mt-1 text-xs text-[var(--text-muted)]">
+                  От этого интервала рассчитываются 4 ночных пробуждения
+                </p>
+                <div className="mt-3 flex flex-col gap-3">
+                  <label className="block text-sm">
+                    <span className="mb-1 block text-[var(--text-muted)]">Отход ко сну</span>
+                    <input
+                      type="time"
+                      value={`${String(dreamYogaBedtimeHour).padStart(2, '0')}:${String(dreamYogaBedtimeMinute).padStart(2, '0')}`}
+                      onChange={(e) => {
+                        const [h, m] = e.target.value.split(':').map(Number)
+                        setDreamYogaTimes({ h, m }, { h: dreamYogaWakeHour, m: dreamYogaWakeMinute })
+                      }}
+                      className={inputClass}
+                    />
+                  </label>
+                  <label className="block text-sm">
+                    <span className="mb-1 block text-[var(--text-muted)]">Подъём</span>
+                    <input
+                      type="time"
+                      value={`${String(dreamYogaWakeHour).padStart(2, '0')}:${String(dreamYogaWakeMinute).padStart(2, '0')}`}
+                      onChange={(e) => {
+                        const [h, m] = e.target.value.split(':').map(Number)
+                        setDreamYogaTimes(
+                          { h: dreamYogaBedtimeHour, m: dreamYogaBedtimeMinute },
+                          { h, m },
+                        )
+                      }}
+                      className={inputClass}
+                    />
+                  </label>
+                </div>
+              </div>
 
-              {DREAM_YOGA_SLOTS.map((slot) => {
-                const enabled = slotEnabled[slot]
-                const time = getSlotTime(dreamYogaSettings, slot)
-                const isTimeSlot = slot === 'bedtime' || slot === 'wake'
-
-                return (
-                  <div key={slot} className="rounded-xl border border-[var(--border)] p-3">
-                    <label className="flex cursor-pointer items-center justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="checkbox"
-                          checked={enabled}
-                          onChange={(e) => setDreamYogaSlotEnabled(slot, e.target.checked)}
-                          className="h-5 w-5 cursor-pointer accent-[var(--color-primary)]"
-                        />
-                        <div>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-[var(--text-muted)]">
+                  Ночные пробуждения
+                </p>
+                <div className="mt-3 flex flex-col gap-2">
+                  {NIGHT_DREAM_YOGA_SLOTS.map((slot) => {
+                    const time = getSlotTime(dreamYogaSettings, slot)
+                    return (
+                      <label
+                        key={slot}
+                        className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-[var(--border)] p-3"
+                      >
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            checked={slotEnabled[slot]}
+                            onChange={(e) => setDreamYogaSlotEnabled(slot, e.target.checked)}
+                            className="h-5 w-5 cursor-pointer accent-[var(--color-primary)]"
+                          />
                           <span className="text-sm">{DREAM_YOGA_SLOT_LABELS[slot]}</span>
-                          {time && (
-                            <p className="text-xs tabular-nums text-[var(--text-muted)]">
-                              {formatAlarmTime(time)}
-                            </p>
-                          )}
                         </div>
-                      </div>
-                    </label>
-                    {isTimeSlot && (
-                      <div className="mt-2 pl-8">
-                        <input
-                          type="time"
-                          value={
-                            slot === 'bedtime'
-                              ? `${String(dreamYogaBedtimeHour).padStart(2, '0')}:${String(dreamYogaBedtimeMinute).padStart(2, '0')}`
-                              : `${String(dreamYogaWakeHour).padStart(2, '0')}:${String(dreamYogaWakeMinute).padStart(2, '0')}`
-                          }
-                          onChange={(e) => {
-                            const [h, m] = e.target.value.split(':').map(Number)
-                            if (slot === 'bedtime') {
-                              setDreamYogaTimes({ h, m }, { h: dreamYogaWakeHour, m: dreamYogaWakeMinute })
-                            } else {
-                              setDreamYogaTimes(
-                                { h: dreamYogaBedtimeHour, m: dreamYogaBedtimeMinute },
-                                { h, m },
-                              )
-                            }
-                          }}
-                          className={inputClass}
-                        />
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
+                        {time && (
+                          <span className="text-sm tabular-nums text-[var(--color-primary)]">
+                            {formatAlarmTime(time)}
+                          </span>
+                        )}
+                      </label>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-[var(--text-muted)]">
+                  Дополнительные напоминания
+                </p>
+                <div className="mt-3 flex flex-col gap-2">
+                  {BOUNDARY_DREAM_YOGA_SLOTS.map((slot) => {
+                    const time = getSlotTime(dreamYogaSettings, slot)
+                    return (
+                      <label
+                        key={slot}
+                        className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-[var(--border)] p-3"
+                      >
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            checked={slotEnabled[slot]}
+                            onChange={(e) => setDreamYogaSlotEnabled(slot, e.target.checked)}
+                            className="h-5 w-5 cursor-pointer accent-[var(--color-primary)]"
+                          />
+                          <span className="text-sm">{DREAM_YOGA_SLOT_LABELS[slot]}</span>
+                        </div>
+                        {time && (
+                          <span className="text-sm tabular-nums text-[var(--text-muted)]">
+                            {formatAlarmTime(time)}
+                          </span>
+                        )}
+                      </label>
+                    )
+                  })}
+                </div>
+              </div>
             </div>
           )}
         </section>

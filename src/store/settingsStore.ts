@@ -122,6 +122,22 @@ function applyDefaultDreamYogaSlots(): Partial<AppSettings> {
   }
 }
 
+function ensureDreamYogaNightDefaults(settings: AppSettings): AppSettings {
+  if (!settings.dreamYogaEnabled) return settings
+
+  const anyNightEnabled =
+    settings.dreamYogaNight1SlotEnabled ||
+    settings.dreamYogaNight2SlotEnabled ||
+    settings.dreamYogaNight3SlotEnabled ||
+    settings.dreamYogaNight4SlotEnabled
+
+  if (!settings.dreamYogaSlotsInitialized || !anyNightEnabled) {
+    return { ...settings, ...applyDefaultDreamYogaSlots() }
+  }
+
+  return settings
+}
+
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set, get) => ({
@@ -212,12 +228,28 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: 'yungdrung-settings',
-      version: 2,
-      migrate: (persisted) => normalizeSettings(persisted as Partial<AppSettings>),
-      merge: (persisted, current) => ({
-        ...current,
-        ...normalizeSettings(persisted as Partial<AppSettings>),
-      }),
+      version: 3,
+      migrate: (persisted, version) => {
+        const normalized = normalizeSettings(persisted as Partial<AppSettings>)
+        if (version < 3) {
+          return ensureDreamYogaNightDefaults(normalized)
+        }
+        return normalized
+      },
+      merge: (persisted, current) => {
+        const merged = ensureDreamYogaNightDefaults({
+          ...current,
+          ...normalizeSettings(persisted as Partial<AppSettings>),
+        })
+        return { ...current, ...merged }
+      },
+      onRehydrateStorage: () => (state) => {
+        if (!state) return
+        const fixed = ensureDreamYogaNightDefaults(state)
+        if (fixed !== state) {
+          useSettingsStore.setState(fixed)
+        }
+      },
       partialize: (state) => ({
         themeMode: state.themeMode,
         remindersEnabled: state.remindersEnabled,

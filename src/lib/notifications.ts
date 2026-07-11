@@ -1,5 +1,6 @@
 import type { DreamYogaSlot } from './dreamYogaSchedule'
 import { assetUrl } from './assetUrl'
+import { startAlarmSound, stopAlarmSound, supportsAlarmSound } from './alarmSound'
 
 export type AlarmKind = 'practice' | 'dream_yoga'
 
@@ -14,16 +15,62 @@ export interface ActiveAlarm {
 const PRACTICE_VIBRATION = [0, 700, 150, 700, 150, 700, 300, 900, 200]
 const DREAM_YOGA_VIBRATION = [0, 900, 150, 900, 150, 900, 150, 1200, 300]
 
-export function vibrateForAlarm(kind: AlarmKind) {
-  if ('vibrate' in navigator) {
-    navigator.vibrate(kind === 'practice' ? PRACTICE_VIBRATION : DREAM_YOGA_VIBRATION)
+let vibrationTimer: ReturnType<typeof setInterval> | null = null
+
+function getVibrationPattern(kind: AlarmKind): number[] {
+  return kind === 'practice' ? PRACTICE_VIBRATION : DREAM_YOGA_VIBRATION
+}
+
+function playVibrationPattern(pattern: number[]) {
+  if (!('vibrate' in navigator)) return
+  navigator.vibrate(pattern)
+}
+
+export function startAlarmVibration(kind: AlarmKind) {
+  stopAlarmVibration()
+  const pattern = getVibrationPattern(kind)
+  playVibrationPattern(pattern)
+  const cycleMs = Math.max(pattern.reduce((sum, step) => sum + step, 0), 2500)
+  vibrationTimer = setInterval(() => playVibrationPattern(pattern), cycleMs)
+}
+
+export function supportsAlarmVibration(): boolean {
+  return 'vibrate' in navigator
+}
+
+export function startAlarmFeedback(kind: AlarmKind) {
+  if (supportsAlarmVibration()) {
+    startAlarmVibration(kind)
   }
+  if (supportsAlarmSound()) {
+    startAlarmSound(kind)
+  }
+}
+
+export function stopAlarmFeedback() {
+  stopAlarmVibration()
+  stopAlarmSound()
+}
+
+export function stopAlarmVibration() {
+  if (vibrationTimer) {
+    clearInterval(vibrationTimer)
+    vibrationTimer = null
+  }
+  if ('vibrate' in navigator) {
+    navigator.vibrate(0)
+  }
+}
+
+export function vibrateForAlarm(kind: AlarmKind) {
+  startAlarmFeedback(kind)
 }
 
 export async function showSystemNotification(alarm: ActiveAlarm) {
   if (!('Notification' in window) || Notification.permission !== 'granted') return
 
   const tag = alarm.kind === 'practice' ? 'practice-reminder' : `dream-yoga-${alarm.slot}`
+  const vibrate = getVibrationPattern(alarm.kind)
 
   const registration = await navigator.serviceWorker?.ready
   if (registration?.showNotification) {
@@ -32,6 +79,9 @@ export async function showSystemNotification(alarm: ActiveAlarm) {
       tag,
       icon: assetUrl('icons/icon-192.svg'),
       badge: assetUrl('icons/icon-192.svg'),
+      vibrate,
+      silent: false,
+      requireInteraction: true,
       data: { kind: alarm.kind, slot: alarm.slot },
     } as NotificationOptions)
   } else {
