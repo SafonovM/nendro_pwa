@@ -11,12 +11,9 @@ export function Dashboard() {
         showSettings
       />
       <div className="px-4 py-4">
-        <p className="mb-2 text-center text-lg leading-7 text-[var(--color-accent)]">
+        <p className="mb-6 text-center text-lg leading-7 text-[var(--color-accent)]">
           ཡུང་དྲུང་བོན
         </p>
-        <h2 className="mb-6 text-center text-base font-medium">
-          Добро пожаловать на путь практики
-        </h2>
 
         <div className="mb-6">
           <AstroCard />
