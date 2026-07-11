@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { useShallow } from 'zustand/react/shallow'
 import { Download, Upload, Bell, Moon } from 'lucide-react'
 import { Header } from '../components/layout/Header'
 import { useSettingsStore, APP_VERSION } from '../store/settingsStore'
@@ -15,7 +16,7 @@ import {
 } from '../lib/dreamYogaSchedule'
 import { requestNotificationPermission } from '../lib/notifications'
 import { unlockAlarmAudio } from '../lib/alarmSound'
-import { downloadTextFile } from '../lib/downloadTextFile'
+import { saveTextFile } from '../lib/downloadTextFile'
 import type { ThemeMode, PractitionerGender } from '../lib/types'
 
 export function Settings() {
@@ -30,20 +31,22 @@ export function Settings() {
   const dreamYogaNight3SlotEnabled = useSettingsStore((s) => s.dreamYogaNight3SlotEnabled)
   const dreamYogaNight4SlotEnabled = useSettingsStore((s) => s.dreamYogaNight4SlotEnabled)
   const dreamYogaWakeSlotEnabled = useSettingsStore((s) => s.dreamYogaWakeSlotEnabled)
-  const dreamYogaSlotTimes = useSettingsStore((s) => ({
-    dreamYogaBedtimeHour: s.dreamYogaBedtimeHour,
-    dreamYogaBedtimeMinute: s.dreamYogaBedtimeMinute,
-    dreamYogaNight1Hour: s.dreamYogaNight1Hour,
-    dreamYogaNight1Minute: s.dreamYogaNight1Minute,
-    dreamYogaNight2Hour: s.dreamYogaNight2Hour,
-    dreamYogaNight2Minute: s.dreamYogaNight2Minute,
-    dreamYogaNight3Hour: s.dreamYogaNight3Hour,
-    dreamYogaNight3Minute: s.dreamYogaNight3Minute,
-    dreamYogaNight4Hour: s.dreamYogaNight4Hour,
-    dreamYogaNight4Minute: s.dreamYogaNight4Minute,
-    dreamYogaWakeHour: s.dreamYogaWakeHour,
-    dreamYogaWakeMinute: s.dreamYogaWakeMinute,
-  }))
+  const dreamYogaSlotTimes = useSettingsStore(
+    useShallow((s) => ({
+      dreamYogaBedtimeHour: s.dreamYogaBedtimeHour,
+      dreamYogaBedtimeMinute: s.dreamYogaBedtimeMinute,
+      dreamYogaNight1Hour: s.dreamYogaNight1Hour,
+      dreamYogaNight1Minute: s.dreamYogaNight1Minute,
+      dreamYogaNight2Hour: s.dreamYogaNight2Hour,
+      dreamYogaNight2Minute: s.dreamYogaNight2Minute,
+      dreamYogaNight3Hour: s.dreamYogaNight3Hour,
+      dreamYogaNight3Minute: s.dreamYogaNight3Minute,
+      dreamYogaNight4Hour: s.dreamYogaNight4Hour,
+      dreamYogaNight4Minute: s.dreamYogaNight4Minute,
+      dreamYogaWakeHour: s.dreamYogaWakeHour,
+      dreamYogaWakeMinute: s.dreamYogaWakeMinute,
+    })),
+  )
   const practitionerGender = useSettingsStore((s) => s.practitionerGender)
   const setThemeMode = useSettingsStore((s) => s.setThemeMode)
   const setReminders = useSettingsStore((s) => s.setReminders)
@@ -67,7 +70,7 @@ export function Settings() {
     try {
       const json = await exportData()
       const filename = `yungdrung_backup_${new Date().toISOString().slice(0, 10)}.json`
-      await downloadTextFile(filename, json)
+      await saveTextFile(filename, json)
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') {
         return

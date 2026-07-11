@@ -219,21 +219,37 @@ function ensureDreamYogaSlotTimes(settings: AppSettings): AppSettings {
   }
 }
 
+function dreamYogaSettingsChanged(before: AppSettings, after: AppSettings): boolean {
+  return (
+    before.dreamYogaBedtimeHour !== after.dreamYogaBedtimeHour ||
+    before.dreamYogaBedtimeMinute !== after.dreamYogaBedtimeMinute ||
+    before.dreamYogaNight1Hour !== after.dreamYogaNight1Hour ||
+    before.dreamYogaNight1Minute !== after.dreamYogaNight1Minute ||
+    before.dreamYogaNight2Hour !== after.dreamYogaNight2Hour ||
+    before.dreamYogaNight2Minute !== after.dreamYogaNight2Minute ||
+    before.dreamYogaNight3Hour !== after.dreamYogaNight3Hour ||
+    before.dreamYogaNight3Minute !== after.dreamYogaNight3Minute ||
+    before.dreamYogaNight4Hour !== after.dreamYogaNight4Hour ||
+    before.dreamYogaNight4Minute !== after.dreamYogaNight4Minute ||
+    before.dreamYogaWakeHour !== after.dreamYogaWakeHour ||
+    before.dreamYogaWakeMinute !== after.dreamYogaWakeMinute ||
+    before.dreamYogaBedtimeSlotEnabled !== after.dreamYogaBedtimeSlotEnabled ||
+    before.dreamYogaNight1SlotEnabled !== after.dreamYogaNight1SlotEnabled ||
+    before.dreamYogaNight2SlotEnabled !== after.dreamYogaNight2SlotEnabled ||
+    before.dreamYogaNight3SlotEnabled !== after.dreamYogaNight3SlotEnabled ||
+    before.dreamYogaNight4SlotEnabled !== after.dreamYogaNight4SlotEnabled ||
+    before.dreamYogaWakeSlotEnabled !== after.dreamYogaWakeSlotEnabled ||
+    before.dreamYogaSlotsInitialized !== after.dreamYogaSlotsInitialized
+  )
+}
+
 function ensureDreamYogaNightDefaults(settings: AppSettings): AppSettings {
   const withTimes = ensureDreamYogaSlotTimes(settings)
-  if (!withTimes.dreamYogaEnabled) return withTimes
-
-  const anyNightEnabled =
-    withTimes.dreamYogaNight1SlotEnabled ||
-    withTimes.dreamYogaNight2SlotEnabled ||
-    withTimes.dreamYogaNight3SlotEnabled ||
-    withTimes.dreamYogaNight4SlotEnabled
-
-  if (!withTimes.dreamYogaSlotsInitialized || !anyNightEnabled) {
-    return { ...withTimes, ...applyDefaultDreamYogaSlots() }
+  if (!withTimes.dreamYogaEnabled || withTimes.dreamYogaSlotsInitialized) {
+    return withTimes
   }
 
-  return withTimes
+  return { ...withTimes, ...applyDefaultDreamYogaSlots() }
 }
 
 function pickSettings(state: SettingsState): AppSettings {
@@ -365,8 +381,9 @@ export const useSettingsStore = create<SettingsState>()(
       },
       onRehydrateStorage: () => (state) => {
         if (!state) return
-        const fixed = ensureDreamYogaNightDefaults(state)
-        if (fixed !== state) {
+        const before = pickSettings(state)
+        const fixed = ensureDreamYogaNightDefaults(before)
+        if (dreamYogaSettingsChanged(before, fixed)) {
           useSettingsStore.setState(fixed)
         }
       },
