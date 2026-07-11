@@ -4,6 +4,7 @@
   --color-brand-red: #8B1A1A;
   --color-brand-gold: #D4A853;
   --color-brand-teal: #2D6A6A;
+  --color-brand-silver: #C0C0C0;
   --color-bg-light: #FAF5EB;
   --color-bg-dark: #1A1A2E;
   --color-surface-light: #FDF8F0;
@@ -35,6 +36,7 @@
 
   --color-tertiary: #d4a853;
   --color-accent: #d4a853;
+  --color-silver: var(--color-brand-silver);
   --color-on-tertiary: #3c2415;
   --color-tertiary-container: #ffe8b0;
 
