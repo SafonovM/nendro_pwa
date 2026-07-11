@@ -15,6 +15,7 @@ import {
 import type { DreamYogaSlot } from '../lib/dreamYogaSchedule'
 import { requestNotificationPermission } from '../lib/notifications'
 import { unlockAlarmAudio } from '../lib/alarmSound'
+import { downloadTextFile } from '../lib/downloadTextFile'
 import type { ThemeMode, PractitionerGender } from '../lib/types'
 
 export function Settings() {
@@ -50,16 +51,24 @@ export function Settings() {
   const loadTexts = usePracticeTextStore((s) => s.loadTexts)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [timePickerSlot, setTimePickerSlot] = useState<DreamYogaSlot | null>(null)
+  const [isExporting, setIsExporting] = useState(false)
 
   const handleExport = async () => {
-    const json = await exportData()
-    const blob = new Blob([json], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `yungdrung_backup_${new Date().toISOString().slice(0, 10)}.json`
-    a.click()
-    URL.revokeObjectURL(url)
+    if (isExporting) return
+    setIsExporting(true)
+    try {
+      const json = await exportData()
+      const filename = `yungdrung_backup_${new Date().toISOString().slice(0, 10)}.json`
+      await downloadTextFile(filename, json)
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        return
+      }
+      const message = error instanceof Error ? error.message : 'Не удалось экспортировать данные'
+      alert(`Ошибка экспорта: ${message}`)
+    } finally {
+      setIsExporting(false)
+    }
   }
 
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -287,11 +296,12 @@ export function Settings() {
           <div className="flex flex-col gap-2">
             <button
               type="button"
-              onClick={handleExport}
-              className="btn-secondary flex items-center justify-center gap-2 px-4 py-2.5"
+              onClick={() => void handleExport()}
+              disabled={isExporting}
+              className="btn-secondary flex items-center justify-center gap-2 px-4 py-2.5 disabled:opacity-60"
             >
               <Download className="h-4 w-4" />
-              Экспорт (JSON)
+              {isExporting ? 'Экспорт…' : 'Экспорт (JSON)'}
             </button>
             <button
               type="button"

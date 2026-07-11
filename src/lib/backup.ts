@@ -1,6 +1,6 @@
 import { db } from './db'
 import type { Dream, Practice, PracticeSession, Transmission } from './db'
-import { base64ToBlob } from '../store/practiceTextStore'
+import { base64ToBlob, blobToBase64 } from '../store/practiceTextStore'
 import type { AppSettings } from '../store/settingsStore'
 import {
   dreamCategoryFromAndroid,
@@ -29,11 +29,24 @@ export interface BackupPayload {
   settings?: AppSettings
 }
 
+function safePracticeCategory(category: unknown): PracticeCategory {
+  const raw = String(category ?? 'custom')
+  if (raw.includes('_') && raw === raw.toLowerCase()) {
+    return raw as PracticeCategory
+  }
+  try {
+    return practiceCategoryFromAndroid(raw)
+  } catch {
+    return 'custom'
+  }
+}
+
 function androidPracticeExport(p: Practice) {
+  const category = safePracticeCategory(p.category)
   return {
     id: p.id,
     name: p.name,
-    category: practiceCategoryToAndroid(p.category),
+    category: practiceCategoryToAndroid(category),
     description: p.description ?? null,
     targetCount: p.targetCount,
     completedCount: p.completedCount,
@@ -82,25 +95,38 @@ function androidDreamExport(d: Dream) {
 }
 
 export async function exportBackup(settings?: AppSettings): Promise<string> {
-  const [practices, practiceSessions, transmissions, dreams, practiceTexts] =
+  const [practices, practiceSessions, transmissions, dreams, practiceTexts, practiceTextFiles] =
     await Promise.all([
       db.practices.toArray(),
       db.practiceSessions.toArray(),
       db.transmissions.toArray(),
       db.dreams.toArray(),
       db.practiceTexts.toArray(),
+      db.practiceTextFiles.toArray(),
     ])
 
-  const practiceTextsExport = practiceTexts.map((text) => ({
-    id: text.id,
-    title: text.title,
-    category: practiceCategoryToAndroid(text.category as PracticeCategory),
-    description: text.description ?? null,
-    fileName: text.fileName ?? null,
-    mimeType: text.mimeType ?? null,
-    filePath: null,
-    createdAt: toEpochMs(text.createdAt),
-  }))
+  const filesByTextId = new Map(
+    practiceTextFiles.map((record) => [record.practiceTextId, record.blob]),
+  )
+
+  const practiceTextsExport = await Promise.all(
+    practiceTexts.map(async (text) => {
+      const category = safePracticeCategory(text.category)
+      const blob = filesByTextId.get(text.id ?? -1)
+      const fileBase64 = blob ? await blobToBase64(blob) : undefined
+      return {
+        id: text.id,
+        title: text.title,
+        category: practiceCategoryToAndroid(category),
+        description: text.description ?? null,
+        fileName: text.fileName ?? null,
+        mimeType: text.mimeType ?? null,
+        filePath: null,
+        fileBase64: fileBase64 ?? null,
+        createdAt: toEpochMs(text.createdAt),
+      }
+    }),
+  )
 
   const payload: BackupPayload = {
     exportVersion: EXPORT_VERSION,
