@@ -65,6 +65,9 @@ export function usesFlexibleTarget(category: PracticeCategory): boolean {
   return FLEXIBLE_TARGET_CATEGORIES.includes(category)
 }
 
-export function isNgondroCategory(category: PracticeCategory): boolean {
-  return NGONDRO_CATEGORIES.includes(category)
+export function getPracticeTitle(practice: { name: string; category: PracticeCategory }): string {
+  if (practice.category === 'custom') {
+    return practice.name
+  }
+  return PRACTICE_CATEGORY_LABELS[practice.category]
 }

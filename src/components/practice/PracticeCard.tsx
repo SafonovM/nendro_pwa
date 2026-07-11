@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import type { Practice } from '../../lib/db'
-import { PRACTICE_CATEGORY_LABELS } from '../../lib/types'
+import { getPracticeTitle } from '../../lib/types'
 import { getPracticeStats } from '../../store/practiceStore'
 import { ProgressBar } from '../ui/ProgressBar'
 
@@ -11,16 +11,18 @@ interface PracticeCardProps {
 
 export function PracticeCard({ practice }: PracticeCardProps) {
   const { remaining, completionPercent } = getPracticeStats(practice)
-  const displayName = PRACTICE_CATEGORY_LABELS[practice.category]
+  const title = getPracticeTitle(practice)
+  const showSubtitle =
+    practice.category !== 'custom' && practice.name !== title
 
   return (
     <Link to={`/practices/${practice.id}`} className="card block p-4 transition-opacity active:opacity-80">
       <div className="flex items-start justify-between gap-2">
         <div>
           <h3 className="font-display text-lg font-semibold text-[var(--color-primary)]">
-            {displayName}
+            {title}
           </h3>
-          {practice.name !== displayName && (
+          {showSubtitle && (
             <p className="text-sm text-[var(--text-muted)]">{practice.name}</p>
           )}
         </div>
