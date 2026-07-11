@@ -12,6 +12,7 @@ import { Transmissions } from './pages/Transmissions'
 import { TransmissionDetail, TransmissionEdit } from './pages/TransmissionDetail'
 import { Dreams } from './pages/Dreams'
 import { DreamDetail } from './pages/DreamDetail'
+import { DreamEdit } from './pages/DreamEdit'
 import { PracticeTexts } from './pages/PracticeTexts'
 import { PracticeTextDetail, PracticeTextEdit } from './pages/PracticeTextDetail'
 import { Settings } from './pages/Settings'
@@ -62,6 +63,7 @@ export default function App() {
             <Route path="/transmissions/:id/edit" element={<TransmissionEdit />} />
             <Route path="/transmissions/:id" element={<TransmissionDetail />} />
             <Route path="/dreams" element={<Dreams />} />
+            <Route path="/dreams/:id/edit" element={<DreamEdit />} />
             <Route path="/dreams/:id" element={<DreamDetail />} />
             <Route path="/practice-texts" element={<PracticeTexts />} />
             <Route path="/practice-texts/:id/edit" element={<PracticeTextEdit />} />

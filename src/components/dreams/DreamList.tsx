@@ -71,10 +71,14 @@ function DreamItem({ dream: d, onDelete }: { dream: Dream; onDelete: () => void 
             {format(date, 'd MMMM yyyy', { locale: ru })}
           </p>
           {d.description && (
-            <p className="mt-2 line-clamp-3 text-sm text-[var(--text)]">{d.description}</p>
+            <p className="mt-2 line-clamp-3 break-words text-sm text-[var(--text)] [overflow-wrap:anywhere]">
+              {d.description}
+            </p>
           )}
           {d.emotions && (
-            <p className="mt-1 text-xs text-[var(--text-muted)]">Эмоции: {d.emotions}</p>
+            <p className="mt-1 break-words text-xs text-[var(--text-muted)] [overflow-wrap:anywhere]">
+              Эмоции: {d.emotions}
+            </p>
           )}
         </Link>
         <div className="flex shrink-0 flex-col items-center gap-1">

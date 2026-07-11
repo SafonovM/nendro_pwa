@@ -1,8 +1,8 @@
 import { useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
-import { ArrowLeft, Trash2 } from 'lucide-react'
+import { ArrowLeft, Pencil, Trash2 } from 'lucide-react'
 import { DREAM_CATEGORY_LABELS } from '../lib/types'
 import { useDreamStore } from '../store/dreamStore'
 
@@ -54,13 +54,20 @@ export function DreamDetail() {
         <h1 className="font-display flex-1 truncate text-lg font-semibold text-[var(--color-primary)]">
           {dream.title || 'Без названия'}
         </h1>
+        <Link
+          to={`/dreams/${dreamId}/edit`}
+          className="p-1 text-[var(--text-muted)]"
+          aria-label="Редактировать"
+        >
+          <Pencil className="h-5 w-5" />
+        </Link>
         <button type="button" onClick={handleDelete} className="p-1 text-[var(--text-muted)]" aria-label="Удалить">
           <Trash2 className="h-5 w-5" />
         </button>
       </div>
 
-      <div className="flex flex-col gap-4 p-4">
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="flex min-w-0 flex-col gap-4 overflow-x-hidden p-4">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           <span className="inline-block rounded-lg bg-[var(--color-secondary)]/10 px-2 py-0.5 text-xs font-medium text-[var(--color-secondary)]">
             {DREAM_CATEGORY_LABELS[dream.category]}
           </span>
@@ -72,15 +79,19 @@ export function DreamDetail() {
           )}
         </div>
 
-        <div className="card p-4">
+        <div className="card min-w-0 overflow-hidden p-4">
           <h2 className="mb-2 text-sm font-medium text-[var(--text-muted)]">Описание</h2>
-          <p className="whitespace-pre-wrap text-sm leading-relaxed">{dream.description}</p>
+          <p className="max-w-full whitespace-pre-wrap break-words text-sm leading-relaxed [overflow-wrap:anywhere]">
+            {dream.description}
+          </p>
         </div>
 
         {dream.emotions && (
-          <div className="card p-4">
+          <div className="card min-w-0 overflow-hidden p-4">
             <h2 className="mb-2 text-sm font-medium text-[var(--text-muted)]">Эмоции</h2>
-            <p className="whitespace-pre-wrap text-sm">{dream.emotions}</p>
+            <p className="max-w-full whitespace-pre-wrap break-words text-sm [overflow-wrap:anywhere]">
+              {dream.emotions}
+            </p>
           </div>
         )}
       </div>
