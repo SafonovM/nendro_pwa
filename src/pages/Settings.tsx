@@ -9,10 +9,10 @@ import { usePracticeTextStore } from '../store/practiceTextStore'
 import {
   DREAM_YOGA_SLOTS,
   DREAM_YOGA_SLOT_LABELS,
-  formatAlarmTime,
+  alarmTimeToInputValue,
   getSlotTime,
+  parseAlarmTimeInput,
 } from '../lib/dreamYogaSchedule'
-import type { DreamYogaSlot } from '../lib/dreamYogaSchedule'
 import { requestNotificationPermission } from '../lib/notifications'
 import { unlockAlarmAudio } from '../lib/alarmSound'
 import { downloadTextFile } from '../lib/downloadTextFile'
@@ -24,22 +24,31 @@ export function Settings() {
   const reminderHour = useSettingsStore((s) => s.reminderHour)
   const reminderMinute = useSettingsStore((s) => s.reminderMinute)
   const dreamYogaEnabled = useSettingsStore((s) => s.dreamYogaEnabled)
-  const dreamYogaBedtimeHour = useSettingsStore((s) => s.dreamYogaBedtimeHour)
-  const dreamYogaBedtimeMinute = useSettingsStore((s) => s.dreamYogaBedtimeMinute)
-  const dreamYogaWakeHour = useSettingsStore((s) => s.dreamYogaWakeHour)
-  const dreamYogaWakeMinute = useSettingsStore((s) => s.dreamYogaWakeMinute)
   const dreamYogaBedtimeSlotEnabled = useSettingsStore((s) => s.dreamYogaBedtimeSlotEnabled)
   const dreamYogaNight1SlotEnabled = useSettingsStore((s) => s.dreamYogaNight1SlotEnabled)
   const dreamYogaNight2SlotEnabled = useSettingsStore((s) => s.dreamYogaNight2SlotEnabled)
   const dreamYogaNight3SlotEnabled = useSettingsStore((s) => s.dreamYogaNight3SlotEnabled)
   const dreamYogaNight4SlotEnabled = useSettingsStore((s) => s.dreamYogaNight4SlotEnabled)
   const dreamYogaWakeSlotEnabled = useSettingsStore((s) => s.dreamYogaWakeSlotEnabled)
+  const dreamYogaSlotTimes = useSettingsStore((s) => ({
+    dreamYogaBedtimeHour: s.dreamYogaBedtimeHour,
+    dreamYogaBedtimeMinute: s.dreamYogaBedtimeMinute,
+    dreamYogaNight1Hour: s.dreamYogaNight1Hour,
+    dreamYogaNight1Minute: s.dreamYogaNight1Minute,
+    dreamYogaNight2Hour: s.dreamYogaNight2Hour,
+    dreamYogaNight2Minute: s.dreamYogaNight2Minute,
+    dreamYogaNight3Hour: s.dreamYogaNight3Hour,
+    dreamYogaNight3Minute: s.dreamYogaNight3Minute,
+    dreamYogaNight4Hour: s.dreamYogaNight4Hour,
+    dreamYogaNight4Minute: s.dreamYogaNight4Minute,
+    dreamYogaWakeHour: s.dreamYogaWakeHour,
+    dreamYogaWakeMinute: s.dreamYogaWakeMinute,
+  }))
   const practitionerGender = useSettingsStore((s) => s.practitionerGender)
   const setThemeMode = useSettingsStore((s) => s.setThemeMode)
   const setReminders = useSettingsStore((s) => s.setReminders)
   const setDreamYogaEnabled = useSettingsStore((s) => s.setDreamYogaEnabled)
-  const setDreamYogaBedtime = useSettingsStore((s) => s.setDreamYogaBedtime)
-  const setDreamYogaWake = useSettingsStore((s) => s.setDreamYogaWake)
+  const setDreamYogaSlotTime = useSettingsStore((s) => s.setDreamYogaSlotTime)
   const setDreamYogaSlotEnabled = useSettingsStore((s) => s.setDreamYogaSlotEnabled)
   const setPractitionerGender = useSettingsStore((s) => s.setPractitionerGender)
   const exportData = useSettingsStore((s) => s.exportData)
@@ -50,7 +59,6 @@ export function Settings() {
   const loadDreams = useDreamStore((s) => s.loadDreams)
   const loadTexts = usePracticeTextStore((s) => s.loadTexts)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [timePickerSlot, setTimePickerSlot] = useState<DreamYogaSlot | null>(null)
   const [isExporting, setIsExporting] = useState(false)
 
   const handleExport = async () => {
@@ -115,12 +123,8 @@ export function Settings() {
   const inputClass =
     'w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 text-sm'
 
-  const dreamYogaSettings = {
-    dreamYogaBedtimeHour,
-    dreamYogaBedtimeMinute,
-    dreamYogaWakeHour,
-    dreamYogaWakeMinute,
-  }
+  const timeInputClass =
+    'rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm tabular-nums'
 
   return (
     <>
@@ -222,66 +226,31 @@ export function Settings() {
                 Расписание:
               </p>
 
-              {DREAM_YOGA_SLOTS.map((slot) => {
-                const time = getSlotTime(dreamYogaSettings, slot)
-                const isBoundary = slot === 'bedtime' || slot === 'wake'
-
-                return (
-                  <div key={slot} className="flex flex-col gap-1">
-                    <label className="flex cursor-pointer items-center justify-between gap-3">
-                      <div className="min-w-0 flex-1">
-                        <span className="text-sm">{DREAM_YOGA_SLOT_LABELS[slot]}</span>
-                        {time && (
-                          <p className="mt-0.5 text-xs tabular-nums text-[var(--text-muted)]">
-                            {formatAlarmTime(time)}
-                          </p>
-                        )}
-                      </div>
-                      <input
-                        type="checkbox"
-                        checked={slotEnabled[slot]}
-                        onChange={(e) => setDreamYogaSlotEnabled(slot, e.target.checked)}
-                        className="h-5 w-5 shrink-0 cursor-pointer accent-[var(--color-primary)]"
-                      />
-                    </label>
-
-                    {isBoundary && (
-                      <div className="pl-0">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setTimePickerSlot((current) => (current === slot ? null : slot))
-                          }
-                          className="text-sm text-[var(--color-primary)]"
-                        >
-                          {slot === 'bedtime'
-                            ? 'Изменить время отхода ко сну'
-                            : 'Изменить время подъёма'}
-                        </button>
-                        {timePickerSlot === slot && (
-                          <input
-                            type="time"
-                            value={
-                              slot === 'bedtime'
-                                ? `${String(dreamYogaBedtimeHour).padStart(2, '0')}:${String(dreamYogaBedtimeMinute).padStart(2, '0')}`
-                                : `${String(dreamYogaWakeHour).padStart(2, '0')}:${String(dreamYogaWakeMinute).padStart(2, '0')}`
-                            }
-                            onChange={(e) => {
-                              const [h, m] = e.target.value.split(':').map(Number)
-                              if (slot === 'bedtime') {
-                                setDreamYogaBedtime(h, m)
-                              } else {
-                                setDreamYogaWake(h, m)
-                              }
-                            }}
-                            className={`${inputClass} mt-2`}
-                          />
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
+              {DREAM_YOGA_SLOTS.map((slot) => (
+                <div
+                  key={slot}
+                  className="flex flex-col gap-2 rounded-xl border border-[var(--border)] p-3"
+                >
+                  <label className="flex cursor-pointer items-center justify-between gap-3">
+                    <span className="text-sm font-medium">{DREAM_YOGA_SLOT_LABELS[slot]}</span>
+                    <input
+                      type="checkbox"
+                      checked={slotEnabled[slot]}
+                      onChange={(e) => setDreamYogaSlotEnabled(slot, e.target.checked)}
+                      className="h-5 w-5 shrink-0 cursor-pointer accent-[var(--color-primary)]"
+                    />
+                  </label>
+                  <input
+                    type="time"
+                    value={alarmTimeToInputValue(getSlotTime(dreamYogaSlotTimes, slot))}
+                    onChange={(e) => {
+                      const parsed = parseAlarmTimeInput(e.target.value)
+                      setDreamYogaSlotTime(slot, parsed.hour, parsed.minute)
+                    }}
+                    className={timeInputClass}
+                  />
+                </div>
+              ))}
 
               <p className="text-xs text-[var(--text-muted)]">
                 На iPhone звук работает, если PWA установлена на экран «Домой» и разрешены

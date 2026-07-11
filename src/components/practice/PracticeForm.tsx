@@ -11,6 +11,12 @@ import {
 } from '../../lib/types'
 import { usePracticeStore, calcDailyNorm } from '../../store/practiceStore'
 import { formatPracticeCount } from '../../lib/format'
+import type { PracticeMedia } from '../../lib/db'
+import { getPracticeMedia, savePracticeMedia, deleteAllPracticeMedia } from '../../lib/practiceMedia'
+import {
+  PracticeMediaSection,
+  type PendingPracticeVideo,
+} from './PracticeMediaSection'
 
 interface PracticeFormProps {
   practiceId?: number
@@ -34,8 +40,16 @@ export function PracticeForm({ practiceId, onDone }: PracticeFormProps) {
   const [targetCountError, setTargetCountError] = useState(false)
   const [loading, setLoading] = useState(isEdit)
 
+  const [existingImage, setExistingImage] = useState<PracticeMedia | null>(null)
+  const [existingVideos, setExistingVideos] = useState<PracticeMedia[]>([])
+  const [pendingImage, setPendingImage] = useState<File | null>(null)
+  const [removeExistingImage, setRemoveExistingImage] = useState(false)
+  const [pendingVideos, setPendingVideos] = useState<PendingPracticeVideo[]>([])
+  const [removeVideoIds, setRemoveVideoIds] = useState<number[]>([])
+
   const isNgondro = isNgondroCategory(category)
   const isFlexible = usesFlexibleTarget(category)
+  const isOwnCategory = category === 'custom'
 
   const effectiveTarget = isNgondro ? NGONDRO_TOTAL : targetCount
   const dailyNormPreview = useMemo(
@@ -43,9 +57,14 @@ export function PracticeForm({ practiceId, onDone }: PracticeFormProps) {
     [effectiveTarget, planDays],
   )
 
+  const pendingImageName = pendingImage?.name ?? null
+  const visibleExistingVideos = existingVideos.filter(
+    (video) => video.id == null || !removeVideoIds.includes(video.id),
+  )
+
   useEffect(() => {
     if (!practiceId) return
-    loadPractices().then(() => {
+    void Promise.all([loadPractices(), getPracticeMedia(practiceId)]).then(([, media]) => {
       const practice = usePracticeStore.getState().practices.find((p) => p.id === practiceId)
       if (practice) {
         setCategory(practice.category)
@@ -54,6 +73,8 @@ export function PracticeForm({ practiceId, onDone }: PracticeFormProps) {
         setTargetCount(practice.targetCount)
         setPlanDays(practice.planDays)
       }
+      setExistingImage(media.image)
+      setExistingVideos(media.videos)
       setLoading(false)
     })
   }, [practiceId, loadPractices])
@@ -66,6 +87,12 @@ export function PracticeForm({ practiceId, onDone }: PracticeFormProps) {
       if (!name.trim() || Object.values(PRACTICE_CATEGORY_LABELS).includes(name)) {
         setName(label)
       }
+    }
+    if (c !== 'custom') {
+      setPendingImage(null)
+      setPendingVideos([])
+      setRemoveExistingImage(false)
+      setRemoveVideoIds([])
     }
   }
 
@@ -84,23 +111,30 @@ export function PracticeForm({ practiceId, onDone }: PracticeFormProps) {
     if (nameInvalid || planInvalid || targetInvalid) return
 
     const resolvedName = trimmedName || PRACTICE_CATEGORY_LABELS[category]
+    const practiceData = {
+      name: resolvedName,
+      category,
+      description: description.trim() || undefined,
+      targetCount: isFlexible ? targetCount : undefined,
+      planDays,
+    }
 
+    let savedId = practiceId
     if (isEdit && practiceId) {
-      await updatePractice(practiceId, {
-        name: resolvedName,
-        category,
-        description: description.trim() || undefined,
-        targetCount: isFlexible ? targetCount : undefined,
-        planDays,
-      })
+      await updatePractice(practiceId, practiceData)
     } else {
-      await addPractice({
-        name: resolvedName,
-        category,
-        description: description.trim() || undefined,
-        targetCount: isFlexible ? targetCount : undefined,
-        planDays,
+      savedId = await addPractice(practiceData)
+    }
+
+    if (isOwnCategory && savedId) {
+      await savePracticeMedia(savedId, {
+        image: pendingImage,
+        removeImage: removeExistingImage && !pendingImage,
+        videos: pendingVideos.map((video) => video.file),
+        removeVideoIds,
       })
+    } else if (savedId && !isOwnCategory && isEdit) {
+      await deleteAllPracticeMedia(savedId)
     }
 
     onDone?.()
@@ -200,6 +234,40 @@ export function PracticeForm({ practiceId, onDone }: PracticeFormProps) {
             ? `Дневная норма: ${formatPracticeCount(dailyNormPreview)}`
             : 'Укажите срок для расчёта дневной нормы'}
       </p>
+
+      {isOwnCategory && (
+        <PracticeMediaSection
+          existingImage={removeExistingImage ? null : existingImage}
+          existingVideos={visibleExistingVideos}
+          pendingImageName={pendingImageName}
+          pendingVideos={pendingVideos}
+          onImageChange={(file) => {
+            setPendingImage(file)
+            if (file) setRemoveExistingImage(false)
+            else setRemoveExistingImage(true)
+          }}
+          onVideosAdd={(files) => {
+            setPendingVideos((prev) => [
+              ...prev,
+              ...files.map((file) => ({
+                key: `${file.name}-${file.lastModified}-${Math.random()}`,
+                file,
+                fileName: file.name,
+              })),
+            ])
+          }}
+          onRemoveExistingImage={() => {
+            setRemoveExistingImage(true)
+            setPendingImage(null)
+          }}
+          onRemoveExistingVideo={(mediaId) => {
+            setRemoveVideoIds((prev) => [...prev, mediaId])
+          }}
+          onRemovePendingVideo={(key) => {
+            setPendingVideos((prev) => prev.filter((video) => video.key !== key))
+          }}
+        />
+      )}
 
       <button type="submit" className="btn-primary px-4 py-3">
         {isEdit ? 'Сохранить' : 'Создать'}

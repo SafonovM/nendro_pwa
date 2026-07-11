@@ -9,7 +9,9 @@ import { GradientCircularProgress } from '../components/ui/GradientCircularProgr
 import { usePracticeStore, getPracticeStats } from '../store/practiceStore'
 import { useSettingsStore } from '../store/settingsStore'
 import { PRACTICE_CATEGORY_LABELS } from '../lib/types'
-import { hasVisualization, resolveVisualization } from '../lib/practiceVisualization'
+import { hasVisualization, resolveVisualization, resolveCustomVisualization } from '../lib/practiceVisualization'
+import { getPracticeMedia, mediaToObjectUrl } from '../lib/practiceMedia'
+import type { PracticeVisualization } from '../lib/practiceVisualization'
 import { getTodayCount, groupSessionsByMonth } from '../lib/backup'
 import { formatPracticeCount } from '../lib/format'
 import type { PracticeSession } from '../lib/db'
@@ -30,6 +32,7 @@ export function PracticeDetail() {
   const practitionerGender = useSettingsStore((s) => s.practitionerGender)
 
   const [sessions, setSessions] = useState<PracticeSession[]>([])
+  const [customVisualization, setCustomVisualization] = useState<PracticeVisualization | null>(null)
   const [malaCountInRound, setMalaCountInRound] = useState(0)
   const [malaCompletedRounds, setMalaCompletedRounds] = useState(0)
   const [showAddDialog, setShowAddDialog] = useState(false)
@@ -39,9 +42,43 @@ export function PracticeDetail() {
   const practice = practices.find((p) => p.id === practiceId)
 
   const visualization = useMemo(() => {
-    if (!practice || !hasVisualization(practice.category)) return null
+    if (!practice) return null
+    if (practice.category === 'custom') return customVisualization
+    if (!hasVisualization(practice.category)) return null
     return resolveVisualization(practice.category, practitionerGender)
-  }, [practice, practitionerGender])
+  }, [practice, practitionerGender, customVisualization])
+
+  useEffect(() => {
+    if (!practiceId || !practice || practice.category !== 'custom') {
+      setCustomVisualization(null)
+      return
+    }
+
+    const objectUrls: string[] = []
+    let cancelled = false
+
+    void getPracticeMedia(practiceId).then(({ image, videos }) => {
+      const posterUrl = image ? mediaToObjectUrl(image) : null
+      if (posterUrl) objectUrls.push(posterUrl)
+      const videoUrls = videos.map((video) => {
+        const url = mediaToObjectUrl(video)
+        objectUrls.push(url)
+        return url
+      })
+
+      if (cancelled) {
+        objectUrls.forEach((url) => URL.revokeObjectURL(url))
+        return
+      }
+
+      setCustomVisualization(resolveCustomVisualization(posterUrl, videoUrls))
+    })
+
+    return () => {
+      cancelled = true
+      objectUrls.forEach((url) => URL.revokeObjectURL(url))
+    }
+  }, [practice, practiceId])
 
   const reloadSessions = async () => {
     if (!practiceId) return

@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { db, type Practice, type PracticeSession } from '../lib/db'
+import { deleteAllPracticeMedia } from '../lib/practiceMedia'
 import { startOfDay } from '../lib/dates'
 import {
   NGONDRO_PLAN_DAYS,
@@ -27,7 +28,7 @@ interface PracticeState {
     targetCount?: number
     planDays?: number
     description?: string
-  }) => Promise<void>
+  }) => Promise<number>
   deletePractice: (id: number) => Promise<void>
   updatePractice: (
     id: number,
@@ -84,12 +85,14 @@ export const usePracticeStore = create<PracticeState>((set, get) => ({
     if (!isNgondro && data.targetCount !== undefined) {
       practice.targetCount = data.targetCount
     }
-    await db.practices.add(practice)
+    const id = (await db.practices.add(practice)) as number
     await get().loadPractices()
+    return id
   },
 
   deletePractice: async (id) => {
     await db.practiceSessions.where('practiceId').equals(id).delete()
+    await deleteAllPracticeMedia(id)
     await db.practices.delete(id)
     await get().loadPractices()
   },

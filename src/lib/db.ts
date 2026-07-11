@@ -56,6 +56,18 @@ export interface PracticeTextFile {
   blob: Blob
 }
 
+export type PracticeMediaType = 'image' | 'video'
+
+export interface PracticeMedia {
+  id?: number
+  practiceId: number
+  mediaType: PracticeMediaType
+  blob: Blob
+  fileName: string
+  mimeType?: string
+  sortOrder: number
+}
+
 export class YungdrungDB extends Dexie {
   practices!: Table<Practice>
   practiceSessions!: Table<PracticeSession>
@@ -63,6 +75,7 @@ export class YungdrungDB extends Dexie {
   dreams!: Table<Dream>
   practiceTexts!: Table<PracticeText>
   practiceTextFiles!: Table<PracticeTextFile>
+  practiceMedia!: Table<PracticeMedia>
 
   constructor() {
     super('yungdrungDiary')
@@ -79,6 +92,15 @@ export class YungdrungDB extends Dexie {
       dreams: '++id, date, category',
       practiceTexts: '++id, title, category, createdAt, fileName',
       practiceTextFiles: '++id, practiceTextId',
+    })
+    this.version(3).stores({
+      practices: '++id, category, createdAt',
+      practiceSessions: '++id, practiceId, date',
+      transmissions: '++id, date, type',
+      dreams: '++id, date, category',
+      practiceTexts: '++id, title, category, createdAt, fileName',
+      practiceTextFiles: '++id, practiceTextId',
+      practiceMedia: '++id, practiceId, mediaType, sortOrder',
     })
   }
 }

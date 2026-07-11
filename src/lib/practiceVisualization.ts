@@ -49,10 +49,22 @@ export function resolveVisualization(
 }
 
 export async function assetExists(url: string): Promise<boolean> {
+  if (url.startsWith('blob:')) return true
   try {
     const res = await fetch(url, { method: 'HEAD' })
     return res.ok
   } catch {
     return false
+  }
+}
+
+export function resolveCustomVisualization(
+  posterUrl: string | null,
+  videoUrls: string[],
+): PracticeVisualization | null {
+  if (!posterUrl && videoUrls.length === 0) return null
+  return {
+    posterPath: posterUrl,
+    videoPaths: videoUrls,
   }
 }
