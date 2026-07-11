@@ -18,6 +18,7 @@ import { PracticeTextDetail, PracticeTextEdit } from './pages/PracticeTextDetail
 import { Settings } from './pages/Settings'
 import { useSettingsStore } from './store/settingsStore'
 import { useAlarmScheduler } from './hooks/useAlarmScheduler'
+import type { ActiveAlarm } from './lib/notifications'
 
 function ThemeProvider({ children }: { children: React.ReactNode }) {
   const themeMode = useSettingsStore((s) => s.themeMode)
@@ -42,6 +43,39 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
+function AppRoutes({
+  activeAlarm,
+  dismissAlarm,
+}: {
+  activeAlarm: ActiveAlarm | null
+  dismissAlarm: () => void
+}) {
+  return (
+    <>
+      <Routes>
+        <Route element={<AppShell />}>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/practices" element={<Practices />} />
+          <Route path="/practices/add" element={<PracticeCreate />} />
+          <Route path="/practices/:id/edit" element={<PracticeEdit />} />
+          <Route path="/practices/:id" element={<PracticeDetail />} />
+          <Route path="/transmissions" element={<Transmissions />} />
+          <Route path="/transmissions/:id/edit" element={<TransmissionEdit />} />
+          <Route path="/transmissions/:id" element={<TransmissionDetail />} />
+          <Route path="/dreams" element={<Dreams />} />
+          <Route path="/dreams/:id/edit" element={<DreamEdit />} />
+          <Route path="/dreams/:id" element={<DreamDetail />} />
+          <Route path="/practice-texts" element={<PracticeTexts />} />
+          <Route path="/practice-texts/:id/edit" element={<PracticeTextEdit />} />
+          <Route path="/practice-texts/:id" element={<PracticeTextDetail />} />
+          <Route path="/settings" element={<Settings />} />
+        </Route>
+      </Routes>
+      {activeAlarm && <AlarmOverlay alarm={activeAlarm} onDismiss={dismissAlarm} />}
+    </>
+  )
+}
+
 export default function App() {
   const splashShown = useSettingsStore((s) => s.splashShown)
   const [showSplash, setShowSplash] = useState(!splashShown)
@@ -50,27 +84,8 @@ export default function App() {
   return (
     <ThemeProvider>
       {showSplash && <SplashScreen onDone={() => setShowSplash(false)} />}
-      {activeAlarm && <AlarmOverlay alarm={activeAlarm} onDismiss={dismissAlarm} />}
       <BrowserRouter basename={import.meta.env.BASE_URL}>
-        <Routes>
-          <Route element={<AppShell />}>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/practices" element={<Practices />} />
-            <Route path="/practices/add" element={<PracticeCreate />} />
-            <Route path="/practices/:id/edit" element={<PracticeEdit />} />
-            <Route path="/practices/:id" element={<PracticeDetail />} />
-            <Route path="/transmissions" element={<Transmissions />} />
-            <Route path="/transmissions/:id/edit" element={<TransmissionEdit />} />
-            <Route path="/transmissions/:id" element={<TransmissionDetail />} />
-            <Route path="/dreams" element={<Dreams />} />
-            <Route path="/dreams/:id/edit" element={<DreamEdit />} />
-            <Route path="/dreams/:id" element={<DreamDetail />} />
-            <Route path="/practice-texts" element={<PracticeTexts />} />
-            <Route path="/practice-texts/:id/edit" element={<PracticeTextEdit />} />
-            <Route path="/practice-texts/:id" element={<PracticeTextDetail />} />
-            <Route path="/settings" element={<Settings />} />
-          </Route>
-        </Routes>
+        <AppRoutes activeAlarm={activeAlarm} dismissAlarm={dismissAlarm} />
       </BrowserRouter>
     </ThemeProvider>
   )

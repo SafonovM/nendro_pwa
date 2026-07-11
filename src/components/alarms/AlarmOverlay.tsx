@@ -33,14 +33,22 @@ export function AlarmOverlay({ alarm, onDismiss }: AlarmOverlayProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--color-bg-dark)]/95 p-6"
-      onPointerDown={() => startAlarmFeedback(alarm.kind)}
+      className="pointer-events-none fixed inset-0 z-30 flex items-center justify-center bg-black/45 p-4 pb-24"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="alarm-title"
     >
-      <div className="card w-full max-w-sm p-6 text-center">
-        <h2 className="font-display text-2xl font-bold text-[var(--color-primary)]">
+      <div
+        className="card pointer-events-auto w-full max-w-sm p-6 text-center shadow-lg"
+        onPointerDown={() => startAlarmFeedback(alarm.kind)}
+      >
+        <h2
+          id="alarm-title"
+          className="font-display text-2xl font-bold text-[var(--color-primary)]"
+        >
           {alarm.title}
         </h2>
-        <p className="mt-3 text-lg">{alarm.body}</p>
+        <p className="mt-3 text-base text-[var(--text)]">{alarm.body}</p>
         {alarm.hint && (
           <p className="mt-2 text-sm text-[var(--text-muted)]">{alarm.hint}</p>
         )}

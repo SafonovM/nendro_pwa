@@ -22,16 +22,21 @@ function getVibrationPattern(kind: AlarmKind): number[] {
 }
 
 function playVibrationPattern(pattern: number[]) {
-  if (!('vibrate' in navigator)) return
-  navigator.vibrate(pattern)
+  if (!('vibrate' in navigator)) return false
+  return navigator.vibrate(pattern)
 }
 
 export function startAlarmVibration(kind: AlarmKind) {
   stopAlarmVibration()
   const pattern = getVibrationPattern(kind)
-  playVibrationPattern(pattern)
+  const started = playVibrationPattern(pattern)
+  if (!started) {
+    playVibrationPattern([0, 400, 120, 400, 120, 600])
+  }
   const cycleMs = Math.max(pattern.reduce((sum, step) => sum + step, 0), 2500)
-  vibrationTimer = setInterval(() => playVibrationPattern(pattern), cycleMs)
+  vibrationTimer = setInterval(() => {
+    playVibrationPattern(pattern)
+  }, cycleMs)
 }
 
 export function supportsAlarmVibration(): boolean {
@@ -82,11 +87,24 @@ export async function showSystemNotification(alarm: ActiveAlarm) {
       vibrate,
       silent: false,
       requireInteraction: true,
-      data: { kind: alarm.kind, slot: alarm.slot },
+      data: { kind: alarm.kind, slot: alarm.slot, body: alarm.body, hint: alarm.hint },
     } as NotificationOptions)
   } else {
     new Notification(alarm.title, { body: alarm.body, tag, icon: assetUrl('icons/icon-192.svg') })
   }
+}
+
+export function alarmFromNotificationData(data: unknown): ActiveAlarm | null {
+  if (!data || typeof data !== 'object') return null
+  const record = data as Record<string, unknown>
+  const kind = record.kind
+  if (kind === 'practice') {
+    return getPracticeAlarmContent()
+  }
+  if (kind === 'dream_yoga' && typeof record.slot === 'string') {
+    return getDreamYogaAlarmContent(record.slot as DreamYogaSlot)
+  }
+  return null
 }
 
 export function getPracticeAlarmContent(): ActiveAlarm {

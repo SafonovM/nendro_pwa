@@ -11,7 +11,7 @@ const navItems = [
 
 export function BottomNav() {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-20 border-t border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur-sm safe-bottom">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur-sm safe-bottom">
       <div className="mx-auto flex max-w-lg items-stretch justify-around px-1 py-2">
         {navItems.map(({ to, icon: Icon, label }) => (
           <NavLink
