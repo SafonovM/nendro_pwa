@@ -16,7 +16,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'og-image.svg', 'splash.svg'],
       manifest: {
-        name: 'Дневник практики Юнгдрунг Бон',
+        name: 'Дневник практик Юнгдрунг Бон',
         short_name: 'Юнгдрунг Бон',
         description: 'Дневник буддийских практик, передач и сновидений',
         theme_color: '#8B1A1A',
