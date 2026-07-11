@@ -71,3 +71,7 @@ export function getPracticeTitle(practice: { name: string; category: PracticeCat
   }
   return PRACTICE_CATEGORY_LABELS[practice.category]
 }
+
+export function isNgondroCategory(category: PracticeCategory): boolean {
+  return NGONDRO_CATEGORIES.includes(category)
+}
