@@ -33,7 +33,7 @@ export function AlarmOverlay({ alarm, onDismiss }: AlarmOverlayProps) {
 
   return (
     <div
-      className="pointer-events-none fixed inset-0 z-30 flex items-center justify-center bg-black/45 p-4 pb-24"
+      className="pointer-events-none fixed inset-0 z-[60] flex items-center justify-center bg-black/45 p-4 pb-24"
       role="dialog"
       aria-modal="true"
       aria-labelledby="alarm-title"

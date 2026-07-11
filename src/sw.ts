@@ -1,6 +1,7 @@
 /// <reference lib="webworker" />
 import { clientsClaim } from 'workbox-core'
 import { cleanupOutdatedCaches, precacheAndRoute } from 'workbox-precaching'
+import { runAlarmEngine } from './lib/swAlarmEngine'
 
 declare const self: ServiceWorkerGlobalScope & {
   __WB_MANIFEST: Array<{ url: string; revision: string | null }>
@@ -10,6 +11,28 @@ precacheAndRoute(self.__WB_MANIFEST)
 cleanupOutdatedCaches()
 void self.skipWaiting()
 clientsClaim()
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(runAlarmEngine())
+})
+
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'CHECK_ALARMS') {
+    event.waitUntil(runAlarmEngine())
+  }
+})
+
+self.addEventListener('sync', ((event: ExtendableEvent & { tag: string }) => {
+  if (event.tag === 'alarm-check') {
+    event.waitUntil(runAlarmEngine())
+  }
+}) as EventListener)
+
+self.addEventListener('periodicsync', ((event: ExtendableEvent & { tag: string }) => {
+  if (event.tag === 'alarm-check') {
+    event.waitUntil(runAlarmEngine())
+  }
+}) as EventListener)
 
 self.addEventListener('notificationclick', (event) => {
   const notification = event.notification

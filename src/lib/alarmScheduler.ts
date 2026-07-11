@@ -18,9 +18,14 @@ export interface AlarmTrigger {
   alarm: ActiveAlarm
 }
 
+export interface DueAlarm {
+  id: string
+  alarm: ActiveAlarm
+}
+
 const FIRED_KEY = 'yungdrung-fired-alarms'
 
-function getFiredToday(): Record<string, boolean> {
+export function getFiredToday(): Record<string, boolean> {
   try {
     const raw = localStorage.getItem(FIRED_KEY)
     if (!raw) return {}
@@ -33,9 +38,16 @@ function getFiredToday(): Record<string, boolean> {
   }
 }
 
-function markFired(id: string) {
+export function markAlarmFired(id: string) {
   const today = format(new Date(), 'yyyy-MM-dd')
   const fired = { ...getFiredToday(), [id]: true }
+  localStorage.setItem(FIRED_KEY, JSON.stringify({ date: today, fired }))
+}
+
+export function clearFiredAlarm(id: string) {
+  const today = format(new Date(), 'yyyy-MM-dd')
+  const fired = { ...getFiredToday() }
+  delete fired[id]
   localStorage.setItem(FIRED_KEY, JSON.stringify({ date: today, fired }))
 }
 
@@ -85,20 +97,40 @@ export function buildAlarmTriggers(settings: AppSettings): AlarmTrigger[] {
   return triggers
 }
 
-export function checkAlarms(settings: AppSettings): ActiveAlarm[] {
-  const now = new Date()
+export function getDueAlarms(settings: AppSettings, now = new Date()): DueAlarm[] {
   const h = now.getHours()
   const m = now.getMinutes()
   const fired = getFiredToday()
-  const due: ActiveAlarm[] = []
+  const due: DueAlarm[] = []
 
   for (const trigger of buildAlarmTriggers(settings)) {
     if (fired[trigger.id]) continue
     if (trigger.hour === h && trigger.minute === m) {
-      markFired(trigger.id)
-      due.push(trigger.alarm)
+      due.push({ id: trigger.id, alarm: trigger.alarm })
     }
   }
 
   return due
+}
+
+/** @deprecated Use getDueAlarms */
+export function checkAlarms(settings: AppSettings): ActiveAlarm[] {
+  return getDueAlarms(settings).map((item) => item.alarm)
+}
+
+export function msUntilTriggerToday(
+  hour: number,
+  minute: number,
+  now = new Date(),
+): number | null {
+  const currentHour = now.getHours()
+  const currentMinute = now.getMinutes()
+
+  if (hour < currentHour || (hour === currentHour && minute < currentMinute)) {
+    return null
+  }
+
+  const target = new Date(now)
+  target.setHours(hour, minute, 0, 0)
+  return Math.max(0, target.getTime() - now.getTime())
 }

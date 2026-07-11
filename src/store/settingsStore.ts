@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { exportBackup, importBackup } from '../lib/backup'
+import { clearFiredAlarm } from '../lib/alarmScheduler'
+import { clearAlarmEntryFiredForTrigger } from '../lib/alarmStore'
 import {
   calculateNightAlarmTimes,
   defaultDreamYogaSlotTimes,
@@ -290,14 +292,23 @@ export const useSettingsStore = create<SettingsState>()(
 
       setThemeMode: (mode) => set({ themeMode: mode }),
 
-      setReminders: (enabled, hour, minute) =>
+      setReminders: (enabled, hour, minute) => {
+        clearFiredAlarm('practice-reminder')
+        void clearAlarmEntryFiredForTrigger('practice-reminder')
         set({
           remindersEnabled: enabled,
           ...(hour !== undefined ? { reminderHour: hour } : {}),
           ...(minute !== undefined ? { reminderMinute: minute } : {}),
-        }),
+        })
+      },
 
       setDreamYogaEnabled: (enabled) => {
+        if (enabled) {
+          for (const slot of ['bedtime', 'night_1', 'night_2', 'night_3', 'night_4', 'wake'] as const) {
+            clearFiredAlarm(`dream-yoga-${slot}`)
+            void clearAlarmEntryFiredForTrigger(`dream-yoga-${slot}`)
+          }
+        }
         if (enabled && !get().dreamYogaSlotsInitialized) {
           set({ dreamYogaEnabled: true, ...applyDefaultDreamYogaSlots() })
         } else {
@@ -306,6 +317,8 @@ export const useSettingsStore = create<SettingsState>()(
       },
 
       setDreamYogaSlotTime: (slot, hour, minute) => {
+        clearFiredAlarm(`dream-yoga-${slot}`)
+        void clearAlarmEntryFiredForTrigger(`dream-yoga-${slot}`)
         const next = setSlotTime(get(), slot, hour, minute)
         set({
           dreamYogaBedtimeHour: next.dreamYogaBedtimeHour,
@@ -324,6 +337,8 @@ export const useSettingsStore = create<SettingsState>()(
       },
 
       setDreamYogaSlotEnabled: (slot, enabled) => {
+        clearFiredAlarm(`dream-yoga-${slot}`)
+        void clearAlarmEntryFiredForTrigger(`dream-yoga-${slot}`)
         const key = {
           bedtime: 'dreamYogaBedtimeSlotEnabled',
           night_1: 'dreamYogaNight1SlotEnabled',
