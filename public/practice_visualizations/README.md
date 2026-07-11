@@ -2,6 +2,12 @@
 
 Положите медиафайлы в эту папку. Пути относительно `app/src/main/assets/`.
 
+## Стослоговая мантра (`hundred_syllable_mantra`)
+
+```
+practice_visualizations/hundred_syllable_mantra/visualization.mp4 — фиксированное видео
+```
+
 ## Сале О (`SALE_O`)
 
 ```

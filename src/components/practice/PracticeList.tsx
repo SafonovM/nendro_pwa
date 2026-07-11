@@ -1,11 +1,23 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import { usePracticeStore } from '../../store/practiceStore'
 import { PracticeCard } from './PracticeCard'
 import { EmptyState } from '../ui/EmptyState'
+import { ConfirmDialog } from '../ui/ConfirmDialog'
+
+const DELETE_CONFIRM_MESSAGE = 'Вы действительно хотите удалить запись?'
 
 export function PracticeList() {
   const practices = usePracticeStore((s) => s.practices)
+  const deletePractice = usePracticeStore((s) => s.deletePractice)
+  const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null)
+
+  const handleConfirmDelete = async () => {
+    if (pendingDeleteId == null) return
+    await deletePractice(pendingDeleteId)
+    setPendingDeleteId(null)
+  }
 
   if (practices.length === 0) {
     return (
@@ -28,18 +40,29 @@ export function PracticeList() {
   }
 
   return (
-    <div className="flex flex-col gap-3 p-4">
-      {practices.map((p) => (
-        <PracticeCard key={p.id} practice={p} />
-      ))}
+    <>
+      <div className="flex flex-col gap-3 p-4">
+        {practices.map((p) =>
+          p.id ? (
+            <PracticeCard key={p.id} practice={p} onDelete={() => setPendingDeleteId(p.id!)} />
+          ) : null,
+        )}
 
-      <Link
-        to="/practices/add"
-        className="btn-secondary flex items-center justify-center gap-2 px-4 py-3"
-      >
-        <Plus className="h-5 w-5" />
-        Добавить практику
-      </Link>
-    </div>
+        <Link
+          to="/practices/add"
+          className="btn-secondary flex items-center justify-center gap-2 px-4 py-3"
+        >
+          <Plus className="h-5 w-5" />
+          Добавить практику
+        </Link>
+      </div>
+
+      <ConfirmDialog
+        open={pendingDeleteId != null}
+        message={DELETE_CONFIRM_MESSAGE}
+        onConfirm={() => void handleConfirmDelete()}
+        onCancel={() => setPendingDeleteId(null)}
+      />
+    </>
   )
 }

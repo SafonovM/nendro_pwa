@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
@@ -7,11 +7,15 @@ import type { Dream } from '../../lib/db'
 import { DREAM_CATEGORY_LABELS } from '../../lib/types'
 import { useDreamStore } from '../../store/dreamStore'
 import { EmptyState } from '../ui/EmptyState'
+import { ConfirmDialog } from '../ui/ConfirmDialog'
+
+const DELETE_CONFIRM_MESSAGE = 'Вы действительно хотите удалить запись?'
 
 export function DreamList() {
   const dreams = useDreamStore((s) => s.dreams)
   const searchQuery = useDreamStore((s) => s.searchQuery)
   const deleteDream = useDreamStore((s) => s.deleteDream)
+  const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null)
 
   const filteredDreams = useMemo(() => {
     if (!searchQuery.trim()) return dreams
@@ -24,11 +28,10 @@ export function DreamList() {
     )
   }, [dreams, searchQuery])
 
-  const handleDelete = async (id: number, title: string) => {
-    if (!confirm(`Удалить запись «${title || 'Без названия'}»? Действие необратимо.`)) {
-      return
-    }
-    await deleteDream(id)
+  const handleConfirmDelete = async () => {
+    if (pendingDeleteId == null) return
+    await deleteDream(pendingDeleteId)
+    setPendingDeleteId(null)
   }
 
   if (filteredDreams.length === 0) {
@@ -41,15 +44,26 @@ export function DreamList() {
   }
 
   return (
-    <div className="flex flex-col gap-3 p-4">
-      {filteredDreams.map((d) => (
-        <DreamItem
-          key={d.id}
-          dream={d}
-          onDelete={() => d.id && handleDelete(d.id, d.title)}
-        />
-      ))}
-    </div>
+    <>
+      <div className="flex flex-col gap-3 p-4">
+        {filteredDreams.map((d) =>
+          d.id ? (
+            <DreamItem
+              key={d.id}
+              dream={d}
+              onDelete={() => setPendingDeleteId(d.id!)}
+            />
+          ) : null,
+        )}
+      </div>
+
+      <ConfirmDialog
+        open={pendingDeleteId != null}
+        message={DELETE_CONFIRM_MESSAGE}
+        onConfirm={() => void handleConfirmDelete()}
+        onCancel={() => setPendingDeleteId(null)}
+      />
+    </>
   )
 }
 
@@ -86,6 +100,7 @@ function DreamItem({ dream: d, onDelete }: { dream: Dream; onDelete: () => void 
             type="button"
             onClick={(e) => {
               e.preventDefault()
+              e.stopPropagation()
               onDelete()
             }}
             className="p-1 text-[var(--text-muted)]"

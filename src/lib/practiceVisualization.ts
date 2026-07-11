@@ -9,7 +9,12 @@ import { assetUrl } from './assetUrl'
 
 const BASE = assetUrl('practice_visualizations')
 
-const VISUALIZATION_CATEGORIES: PracticeCategory[] = ['sale_o', 'ma_tri', 'du_tri_su']
+const VISUALIZATION_CATEGORIES: PracticeCategory[] = [
+  'hundred_syllable_mantra',
+  'sale_o',
+  'ma_tri',
+  'du_tri_su',
+]
 
 export function hasVisualization(category: PracticeCategory): boolean {
   return VISUALIZATION_CATEGORIES.includes(category)
@@ -22,6 +27,11 @@ export function resolveVisualization(
   if (!hasVisualization(category)) return null
 
   switch (category) {
+    case 'hundred_syllable_mantra':
+      return {
+        posterPath: null,
+        videoPaths: [`${BASE}/hundred_syllable_mantra/visualization.mp4`],
+      }
     case 'sale_o':
       return {
         posterPath: `${BASE}/sale_o/poster.png`,
