@@ -30,6 +30,8 @@ interface SettingsState extends AppSettings {
   setReminders: (enabled: boolean, hour?: number, minute?: number) => void
   setDreamYogaEnabled: (enabled: boolean) => void
   setDreamYogaTimes: (bedtime: { h: number; m: number }, wake: { h: number; m: number }) => void
+  setDreamYogaBedtime: (hour: number, minute: number) => void
+  setDreamYogaWake: (hour: number, minute: number) => void
   setDreamYogaSlotEnabled: (slot: DreamYogaSlot, enabled: boolean) => void
   setPractitionerGender: (gender: PractitionerGender) => void
   markSplashShown: () => void
@@ -167,6 +169,12 @@ export const useSettingsStore = create<SettingsState>()(
           dreamYogaWakeHour: wake.h,
           dreamYogaWakeMinute: wake.m,
         }),
+
+      setDreamYogaBedtime: (hour, minute) =>
+        set({ dreamYogaBedtimeHour: hour, dreamYogaBedtimeMinute: minute }),
+
+      setDreamYogaWake: (hour, minute) =>
+        set({ dreamYogaWakeHour: hour, dreamYogaWakeMinute: minute }),
 
       setDreamYogaSlotEnabled: (slot, enabled) => {
         const key = {
