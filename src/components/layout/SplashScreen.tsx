@@ -20,7 +20,7 @@ export function SplashScreen({ onDone }: { onDone: () => void }) {
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#1A3A6B] ${fade ? 'splash-fade' : ''}`}
+      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-[var(--color-primary)] ${fade ? 'splash-fade' : ''}`}
     >
       <img
         src={assetUrl('splash.svg')}

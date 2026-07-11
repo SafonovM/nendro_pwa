@@ -11,7 +11,7 @@ export function ProgressBar({ percent, className = '' }: ProgressBarProps) {
         className="h-full rounded-full transition-all duration-300"
         style={{
           width: `${clamped}%`,
-          background: 'linear-gradient(90deg, #8B1A1A, #D4A853)',
+          background: 'linear-gradient(90deg, var(--gradient-start), var(--gradient-end))',
         }}
       />
     </div>

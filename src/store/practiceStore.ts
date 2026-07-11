@@ -1,11 +1,21 @@
 import { create } from 'zustand'
 import { db, type Practice, type PracticeSession } from '../lib/db'
+import { startOfDay } from '../lib/dates'
 import {
   NGONDRO_PLAN_DAYS,
   NGONDRO_TOTAL,
   isNgondroCategory,
   type PracticeCategory,
 } from '../lib/types'
+
+interface AddSessionResult {
+  goalReached: boolean
+}
+
+interface MalaTapResult {
+  sessionId: number
+  goalReached: boolean
+}
 
 interface PracticeState {
   practices: Practice[]
@@ -19,8 +29,25 @@ interface PracticeState {
     description?: string
   }) => Promise<void>
   deletePractice: (id: number) => Promise<void>
-  incrementCount: (id: number, amount?: number) => Promise<void>
+  incrementCount: (id: number, amount?: number) => Promise<AddSessionResult>
+  addSession: (
+    practiceId: number,
+    count: number,
+    date?: Date,
+    note?: string,
+  ) => Promise<AddSessionResult>
+  quickAddSession: (practiceId: number, count: number) => Promise<AddSessionResult>
+  addMalaRepetition: (practiceId: number, activeSessionId: number | null) => Promise<MalaTapResult>
   getSessions: (practiceId: number) => Promise<PracticeSession[]>
+}
+
+async function finalizeAdd(practiceId: number, addedCount: number): Promise<AddSessionResult> {
+  const practice = await db.practices.get(practiceId)
+  if (!practice) return { goalReached: false }
+  const newCount = practice.completedCount + addedCount
+  await db.practices.update(practiceId, { completedCount: newCount })
+  await usePracticeStore.getState().loadPractices()
+  return { goalReached: newCount >= practice.targetCount }
 }
 
 export const usePracticeStore = create<PracticeState>((set, get) => ({
@@ -41,8 +68,11 @@ export const usePracticeStore = create<PracticeState>((set, get) => ({
       description: data.description,
       targetCount: isNgondro ? NGONDRO_TOTAL : (data.targetCount ?? 1000),
       completedCount: 0,
-      planDays: isNgondro ? NGONDRO_PLAN_DAYS : (data.planDays ?? 0),
+      planDays: data.planDays ?? (isNgondro ? NGONDRO_PLAN_DAYS : 0),
       createdAt: new Date(),
+    }
+    if (!isNgondro && data.targetCount !== undefined) {
+      practice.targetCount = data.targetCount
     }
     await db.practices.add(practice)
     await get().loadPractices()
@@ -55,16 +85,52 @@ export const usePracticeStore = create<PracticeState>((set, get) => ({
   },
 
   incrementCount: async (id, amount = 1) => {
-    const practice = await db.practices.get(id)
-    if (!practice) return
-    const newCount = practice.completedCount + amount
-    await db.practices.update(id, { completedCount: newCount })
     await db.practiceSessions.add({
       practiceId: id,
       count: amount,
-      date: new Date(),
+      date: startOfDay(),
     })
-    await get().loadPractices()
+    return finalizeAdd(id, amount)
+  },
+
+  addSession: async (practiceId, count, date = startOfDay(), note) => {
+    await db.practiceSessions.add({
+      practiceId,
+      count,
+      date: startOfDay(date),
+      note: note?.trim() || undefined,
+    })
+    return finalizeAdd(practiceId, count)
+  },
+
+  quickAddSession: async (practiceId, count) => {
+    return get().addSession(practiceId, count, startOfDay())
+  },
+
+  addMalaRepetition: async (practiceId, activeSessionId) => {
+    const today = startOfDay()
+    let sessionId = activeSessionId
+
+    if (sessionId != null) {
+      const existing = await db.practiceSessions.get(sessionId)
+      if (!existing || existing.practiceId !== practiceId) {
+        sessionId = null
+      }
+    }
+
+    if (sessionId == null) {
+      sessionId = (await db.practiceSessions.add({
+        practiceId,
+        count: 1,
+        date: today,
+      })) as number
+    } else {
+      const existing = (await db.practiceSessions.get(sessionId))!
+      await db.practiceSessions.update(sessionId, { count: existing.count + 1 })
+    }
+
+    const result = await finalizeAdd(practiceId, 1)
+    return { sessionId, goalReached: result.goalReached }
   },
 
   getSessions: async (practiceId) => {
@@ -81,4 +147,9 @@ export function getPracticeStats(practice: Practice) {
   const dailyNorm =
     practice.planDays > 0 ? Math.ceil(practice.targetCount / practice.planDays) : 0
   return { remaining, completionPercent, dailyNorm }
+}
+
+export function calcDailyNorm(targetCount: number, planDays: number): number {
+  if (planDays <= 0) return 0
+  return Math.ceil(targetCount / planDays)
 }

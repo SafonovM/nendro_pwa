@@ -54,7 +54,7 @@ export function Settings() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `yungdrung-backup-${new Date().toISOString().slice(0, 10)}.json`
+    a.download = `yungdrung_backup_${new Date().toISOString().slice(0, 10)}.json`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -62,9 +62,17 @@ export function Settings() {
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    const text = await file.text()
-    await importData(text)
-    await Promise.all([loadPractices(), loadTransmissions(), loadDreams(), loadTexts()])
+    if (!confirm('Импорт заменит все текущие данные. Продолжить?')) {
+      e.target.value = ''
+      return
+    }
+    try {
+      const text = await file.text()
+      await importData(text)
+      await Promise.all([loadPractices(), loadTransmissions(), loadDreams(), loadTexts()])
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Ошибка импорта')
+    }
     e.target.value = ''
   }
 
