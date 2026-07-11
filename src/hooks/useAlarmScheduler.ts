@@ -17,6 +17,7 @@ import {
   stopAlarmFeedback,
   type ActiveAlarm,
 } from '../lib/notifications'
+import { supportsPwaNotifications } from '../lib/device'
 import { clearPendingAlarm, loadPendingAlarm, savePendingAlarm } from '../lib/pendingAlarm'
 
 function triggerIdForAlarm(alarm: ActiveAlarm): string | undefined {
@@ -76,6 +77,7 @@ export function useAlarmScheduler() {
   }, [])
 
   const reschedule = useCallback(() => {
+    if (!supportsPwaNotifications()) return
     const settings = useSettingsStore.getState()
     runAlarmSchedule(settings, activateAlarm)
     void syncAlarmScheduleToServiceWorker(settings)
@@ -92,7 +94,7 @@ export function useAlarmScheduler() {
   }, [])
 
   useEffect(() => {
-    if (!settingsReady) return
+    if (!settingsReady || !supportsPwaNotifications()) return
 
     void hydrateFiredAlarmsFromStore().then(() => {
       const launchAlarm = alarmFromLaunchUrl()
@@ -113,14 +115,14 @@ export function useAlarmScheduler() {
   }, [settingsReady, reschedule, activateAlarm])
 
   useEffect(() => {
-    if (!settingsReady) return
+    if (!settingsReady || !supportsPwaNotifications()) return
     return useSettingsStore.subscribe(() => {
       reschedule()
     })
   }, [settingsReady, reschedule])
 
   useEffect(() => {
-    if (!settingsReady) return
+    if (!settingsReady || !supportsPwaNotifications()) return
 
     const onVisible = () => {
       refreshPollInterval()
@@ -147,6 +149,8 @@ export function useAlarmScheduler() {
   }, [settingsReady, reschedule])
 
   useEffect(() => {
+    if (!supportsPwaNotifications()) return
+
     const onMessage = (event: MessageEvent) => {
       if (event.data?.type === 'ALARM_NOTIFICATION_CLICK') {
         const alarm = alarmFromNotificationData(event.data.alarm)

@@ -14,6 +14,7 @@ import {
   getSlotTime,
   parseAlarmTimeInput,
 } from '../lib/dreamYogaSchedule'
+import { supportsPwaNotifications } from '../lib/device'
 import { requestNotificationPermission } from '../lib/notifications'
 import { unlockAlarmAudio } from '../lib/alarmSound'
 import { saveTextFile } from '../lib/downloadTextFile'
@@ -123,6 +124,8 @@ export function Settings() {
     wake: dreamYogaWakeSlotEnabled,
   }
 
+  const showNotifications = supportsPwaNotifications()
+
   const inputClass =
     'w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 text-sm'
 
@@ -176,6 +179,7 @@ export function Settings() {
           </div>
         </section>
 
+        {showNotifications && (
         <section className="card p-4">
           <h3 className="mb-3 font-medium">Напоминания о практике</h3>
           <label className="flex cursor-pointer items-center gap-3">
@@ -202,7 +206,9 @@ export function Settings() {
             </div>
           )}
         </section>
+        )}
 
+        {showNotifications && (
         <section className="card p-4">
           <div className="mb-3 flex items-center gap-2">
             <Moon className="h-5 w-5 text-[var(--color-primary)]" />
@@ -258,11 +264,11 @@ export function Settings() {
               <p className="text-xs text-[var(--text-muted)]">
                 Для ночных будильников установите PWA на экран «Домой» и разрешите уведомления.
                 Будильники срабатывают при закрытом приложении через системные уведомления.
-                На iPhone фоновые напоминания ограничены — держите PWA установленной и уведомления включёнными.
               </p>
             </div>
           )}
         </section>
+        )}
 
         <section className="card p-4">
           <h3 className="mb-3 font-medium">Резервная копия</h3>
