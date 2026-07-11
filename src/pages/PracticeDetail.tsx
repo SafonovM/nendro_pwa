@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 
-import { ArrowLeft, Trash2 } from 'lucide-react'
+import { ArrowLeft, Trash2, Pencil } from 'lucide-react'
 
 import { PracticeVisualizationSection } from '../components/practice/PracticeVisualizationSection'
 
@@ -235,6 +235,14 @@ export function PracticeDetail() {
           {practice.name}
 
         </h1>
+
+        <Link
+          to={`/practices/${practiceId}/edit`}
+          className="p-1 text-[var(--text-muted)]"
+          aria-label="Редактировать"
+        >
+          <Pencil className="h-5 w-5" />
+        </Link>
 
         <button type="button" onClick={handleDelete} aria-label="Удалить">
 

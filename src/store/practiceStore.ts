@@ -29,6 +29,16 @@ interface PracticeState {
     description?: string
   }) => Promise<void>
   deletePractice: (id: number) => Promise<void>
+  updatePractice: (
+    id: number,
+    data: {
+      name: string
+      category: PracticeCategory
+      targetCount?: number
+      planDays?: number
+      description?: string
+    },
+  ) => Promise<void>
   incrementCount: (id: number, amount?: number) => Promise<AddSessionResult>
   addSession: (
     practiceId: number,
@@ -81,6 +91,20 @@ export const usePracticeStore = create<PracticeState>((set, get) => ({
   deletePractice: async (id) => {
     await db.practiceSessions.where('practiceId').equals(id).delete()
     await db.practices.delete(id)
+    await get().loadPractices()
+  },
+
+  updatePractice: async (id, data) => {
+    const existing = await db.practices.get(id)
+    if (!existing) return
+    const isNgondro = isNgondroCategory(data.category)
+    await db.practices.update(id, {
+      name: data.name,
+      category: data.category,
+      description: data.description,
+      targetCount: isNgondro ? NGONDRO_TOTAL : (data.targetCount ?? existing.targetCount),
+      planDays: data.planDays ?? existing.planDays,
+    })
     await get().loadPractices()
   },
 

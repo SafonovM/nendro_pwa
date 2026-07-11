@@ -6,6 +6,7 @@ import { AlarmOverlay } from './components/alarms/AlarmOverlay'
 import { Dashboard } from './pages/Dashboard'
 import { Practices } from './pages/Practices'
 import { PracticeDetail } from './pages/PracticeDetail'
+import { PracticeEdit } from './pages/PracticeEdit'
 import { Transmissions } from './pages/Transmissions'
 import { Dreams } from './pages/Dreams'
 import { DreamDetail } from './pages/DreamDetail'
@@ -53,6 +54,7 @@ export default function App() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/practices" element={<Practices />} />
             <Route path="/practices/:id" element={<PracticeDetail />} />
+            <Route path="/practices/:id/edit" element={<PracticeEdit />} />
             <Route path="/transmissions" element={<Transmissions />} />
             <Route path="/dreams" element={<Dreams />} />
             <Route path="/dreams/:id" element={<DreamDetail />} />
