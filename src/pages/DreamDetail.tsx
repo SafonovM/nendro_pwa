@@ -1,10 +1,13 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { ArrowLeft, Pencil, Trash2 } from 'lucide-react'
 import { DREAM_CATEGORY_LABELS } from '../lib/types'
 import { useDreamStore } from '../store/dreamStore'
+import { ConfirmDialog } from '../components/ui/ConfirmDialog'
+
+const DELETE_CONFIRM_MESSAGE = 'Вы действительно хотите удалить запись?'
 
 export function DreamDetail() {
   const { id } = useParams<{ id: string }>()
@@ -12,6 +15,7 @@ export function DreamDetail() {
   const dreams = useDreamStore((s) => s.dreams)
   const loadDreams = useDreamStore((s) => s.loadDreams)
   const deleteDream = useDreamStore((s) => s.deleteDream)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   const dreamId = Number(id)
   const dream = dreams.find((d) => d.id === dreamId)
@@ -34,13 +38,6 @@ export function DreamDetail() {
   const date = dream.date instanceof Date ? dream.date : new Date(dream.date)
 
   const handleDelete = async () => {
-    if (
-      !confirm(
-        'Удалить эту запись о сне? Действие необратимо.',
-      )
-    ) {
-      return
-    }
     await deleteDream(dreamId)
     navigate('/dreams')
   }
@@ -61,7 +58,12 @@ export function DreamDetail() {
         >
           <Pencil className="h-5 w-5" />
         </Link>
-        <button type="button" onClick={handleDelete} className="p-1 text-[var(--text-muted)]" aria-label="Удалить">
+        <button
+          type="button"
+          onClick={() => setShowDeleteConfirm(true)}
+          className="p-1 text-[var(--text-muted)]"
+          aria-label="Удалить"
+        >
           <Trash2 className="h-5 w-5" />
         </button>
       </div>
@@ -95,6 +97,13 @@ export function DreamDetail() {
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        message={DELETE_CONFIRM_MESSAGE}
+        onConfirm={() => void handleDelete()}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     </>
   )
 }

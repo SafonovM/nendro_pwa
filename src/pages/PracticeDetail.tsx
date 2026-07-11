@@ -6,6 +6,7 @@ import { PracticeHistorySection } from '../components/practice/PracticeHistorySe
 import { PracticeVisualizationSection } from '../components/practice/PracticeVisualizationSection'
 import { VirtualMalaCounter } from '../components/practice/VirtualMalaCounter'
 import { GradientCircularProgress } from '../components/ui/GradientCircularProgress'
+import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { usePracticeStore, getPracticeStats } from '../store/practiceStore'
 import { useSettingsStore } from '../store/settingsStore'
 import { PRACTICE_CATEGORY_LABELS } from '../lib/types'
@@ -18,6 +19,7 @@ import type { PracticeSession } from '../lib/db'
 
 const MALA_BEAD_COUNT = 108
 const QUICK_ADD_AMOUNTS = [27, 108]
+const DELETE_CONFIRM_MESSAGE = 'Вы действительно хотите удалить запись?'
 
 export function PracticeDetail() {
   const { id } = useParams<{ id: string }>()
@@ -36,6 +38,7 @@ export function PracticeDetail() {
   const [malaCountInRound, setMalaCountInRound] = useState(0)
   const [malaCompletedRounds, setMalaCompletedRounds] = useState(0)
   const [showAddDialog, setShowAddDialog] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const activeMalaSessionId = useRef<number | null>(null)
 
   const practiceId = Number(id)
@@ -112,10 +115,8 @@ export function PracticeDetail() {
   const isDailyNormMet = dailyNorm > 0 && todayCount >= dailyNorm
 
   const handleDelete = async () => {
-    if (confirm('Удалить практику?')) {
-      await deletePractice(practiceId)
-      navigate('/practices')
-    }
+    await deletePractice(practiceId)
+    navigate('/practices')
   }
 
   const handleMalaTap = async () => {
@@ -161,7 +162,11 @@ export function PracticeDetail() {
         >
           <Pencil className="h-5 w-5" />
         </Link>
-        <button type="button" onClick={handleDelete} aria-label="Удалить">
+        <button
+          type="button"
+          onClick={() => setShowDeleteConfirm(true)}
+          aria-label="Удалить"
+        >
           <Trash2 className="h-5 w-5 text-[var(--text-muted)]" />
         </button>
       </div>
@@ -273,6 +278,13 @@ export function PracticeDetail() {
         open={showAddDialog}
         onClose={() => setShowAddDialog(false)}
         onConfirm={(count, date, note) => void handleAddSession(count, date, note)}
+      />
+
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        message={DELETE_CONFIRM_MESSAGE}
+        onConfirm={() => void handleDelete()}
+        onCancel={() => setShowDeleteConfirm(false)}
       />
     </>
   )
