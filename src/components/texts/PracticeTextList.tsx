@@ -1,11 +1,23 @@
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Paperclip } from 'lucide-react'
 import { usePracticeTextStore } from '../../store/practiceTextStore'
 import { EmptyState } from '../ui/EmptyState'
 
 export function PracticeTextList() {
-  const filteredTexts = usePracticeTextStore((s) => s.filteredTexts())
+  const texts = usePracticeTextStore((s) => s.texts)
   const searchQuery = usePracticeTextStore((s) => s.searchQuery)
+
+  const filteredTexts = useMemo(() => {
+    if (!searchQuery.trim()) return texts
+    const q = searchQuery.toLowerCase()
+    return texts.filter(
+      (t) =>
+        t.title.toLowerCase().includes(q) ||
+        (t.description?.toLowerCase().includes(q) ?? false) ||
+        (t.fileName?.toLowerCase().includes(q) ?? false),
+    )
+  }, [texts, searchQuery])
 
   if (filteredTexts.length === 0) {
     return (

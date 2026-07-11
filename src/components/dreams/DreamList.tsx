@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
@@ -8,9 +9,20 @@ import { useDreamStore } from '../../store/dreamStore'
 import { EmptyState } from '../ui/EmptyState'
 
 export function DreamList() {
-  const filteredDreams = useDreamStore((s) => s.filteredDreams())
+  const dreams = useDreamStore((s) => s.dreams)
   const searchQuery = useDreamStore((s) => s.searchQuery)
   const deleteDream = useDreamStore((s) => s.deleteDream)
+
+  const filteredDreams = useMemo(() => {
+    if (!searchQuery.trim()) return dreams
+    const q = searchQuery.toLowerCase()
+    return dreams.filter(
+      (d) =>
+        d.title.toLowerCase().includes(q) ||
+        d.description.toLowerCase().includes(q) ||
+        d.emotions.toLowerCase().includes(q),
+    )
+  }, [dreams, searchQuery])
 
   const handleDelete = async (id: number, title: string) => {
     if (!confirm(`Удалить запись «${title || 'Без названия'}»? Действие необратимо.`)) {
