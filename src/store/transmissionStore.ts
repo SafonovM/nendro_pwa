@@ -6,7 +6,8 @@ interface TransmissionState {
   transmissions: Transmission[]
   loading: boolean
   loadTransmissions: () => Promise<void>
-  addTransmission: (data: Omit<Transmission, 'id'>) => Promise<void>
+  addTransmission: (data: Omit<Transmission, 'id'>) => Promise<number>
+  updateTransmission: (id: number, data: Omit<Transmission, 'id'>) => Promise<void>
   deleteTransmission: (id: number) => Promise<void>
 }
 
@@ -21,7 +22,13 @@ export const useTransmissionStore = create<TransmissionState>((set, get) => ({
   },
 
   addTransmission: async (data) => {
-    await db.transmissions.add(data)
+    const id = (await db.transmissions.add(data)) as number
+    await get().loadTransmissions()
+    return id
+  },
+
+  updateTransmission: async (id, data) => {
+    await db.transmissions.update(id, data)
     await get().loadTransmissions()
   },
 

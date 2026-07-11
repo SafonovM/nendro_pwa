@@ -7,7 +7,9 @@ import { Dashboard } from './pages/Dashboard'
 import { Practices } from './pages/Practices'
 import { PracticeDetail } from './pages/PracticeDetail'
 import { PracticeEdit } from './pages/PracticeEdit'
+import { PracticeCreate } from './pages/PracticeCreate'
 import { Transmissions } from './pages/Transmissions'
+import { TransmissionDetail, TransmissionEdit } from './pages/TransmissionDetail'
 import { Dreams } from './pages/Dreams'
 import { DreamDetail } from './pages/DreamDetail'
 import { PracticeTexts } from './pages/PracticeTexts'
@@ -53,9 +55,12 @@ export default function App() {
           <Route element={<AppShell />}>
             <Route path="/" element={<Dashboard />} />
             <Route path="/practices" element={<Practices />} />
-            <Route path="/practices/:id" element={<PracticeDetail />} />
+            <Route path="/practices/add" element={<PracticeCreate />} />
             <Route path="/practices/:id/edit" element={<PracticeEdit />} />
+            <Route path="/practices/:id" element={<PracticeDetail />} />
             <Route path="/transmissions" element={<Transmissions />} />
+            <Route path="/transmissions/:id/edit" element={<TransmissionEdit />} />
+            <Route path="/transmissions/:id" element={<TransmissionDetail />} />
             <Route path="/dreams" element={<Dreams />} />
             <Route path="/dreams/:id" element={<DreamDetail />} />
             <Route path="/practice-texts" element={<PracticeTexts />} />

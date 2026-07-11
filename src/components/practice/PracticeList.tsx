@@ -1,15 +1,13 @@
-import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import { usePracticeStore } from '../../store/practiceStore'
 import { PracticeCard } from './PracticeCard'
-import { PracticeForm } from './PracticeForm'
 import { EmptyState } from '../ui/EmptyState'
 
 export function PracticeList() {
   const practices = usePracticeStore((s) => s.practices)
-  const [showForm, setShowForm] = useState(false)
 
-  if (practices.length === 0 && !showForm) {
+  if (practices.length === 0) {
     return (
       <>
         <EmptyState
@@ -17,14 +15,13 @@ export function PracticeList() {
           subtitle="Создайте практику Нёндро или выберите из предустановленных категорий"
         />
         <div className="px-4 pb-4">
-          <button
-            type="button"
-            onClick={() => setShowForm(true)}
+          <Link
+            to="/practices/add"
             className="btn-primary flex w-full items-center justify-center gap-2 px-4 py-3"
           >
             <Plus className="h-5 w-5" />
             Добавить практику
-          </button>
+          </Link>
         </div>
       </>
     )
@@ -36,18 +33,13 @@ export function PracticeList() {
         <PracticeCard key={p.id} practice={p} />
       ))}
 
-      {showForm ? (
-        <PracticeForm onDone={() => setShowForm(false)} />
-      ) : (
-        <button
-          type="button"
-          onClick={() => setShowForm(true)}
-          className="btn-secondary flex items-center justify-center gap-2 px-4 py-3"
-        >
-          <Plus className="h-5 w-5" />
-          Добавить практику
-        </button>
-      )}
+      <Link
+        to="/practices/add"
+        className="btn-secondary flex items-center justify-center gap-2 px-4 py-3"
+      >
+        <Plus className="h-5 w-5" />
+        Добавить практику
+      </Link>
     </div>
   )
 }

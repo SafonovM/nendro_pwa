@@ -13,7 +13,7 @@ import {
 import { fromEpochMs, startOfDay, toEpochMs } from './dates'
 import type { DreamCategory, PracticeCategory, TransmissionType } from './types'
 
-export const EXPORT_VERSION = 3
+export const EXPORT_VERSION = 4
 export const APP_NAME = 'YungdrungDiary'
 
 export interface BackupPayload {
@@ -82,33 +82,25 @@ function androidDreamExport(d: Dream) {
 }
 
 export async function exportBackup(settings?: AppSettings): Promise<string> {
-  const [practices, practiceSessions, transmissions, dreams, practiceTexts, textFiles] =
+  const [practices, practiceSessions, transmissions, dreams, practiceTexts] =
     await Promise.all([
       db.practices.toArray(),
       db.practiceSessions.toArray(),
       db.transmissions.toArray(),
       db.dreams.toArray(),
       db.practiceTexts.toArray(),
-      db.practiceTextFiles.toArray(),
     ])
 
-  const filesByTextId = new Map(textFiles.map((f) => [f.practiceTextId, f.blob]))
-  const practiceTextsExport = await Promise.all(
-    practiceTexts.map(async (text) => {
-      const blob = text.id ? filesByTextId.get(text.id) : undefined
-      const fileBase64 = blob ? await blobToBase64(blob) : undefined
-      return {
-        id: text.id,
-        title: text.title,
-        category: practiceCategoryToAndroid(text.category as PracticeCategory),
-        description: text.description ?? null,
-        fileName: text.fileName ?? null,
-        mimeType: text.mimeType ?? null,
-        fileBase64: fileBase64 ?? null,
-        createdAt: toEpochMs(text.createdAt),
-      }
-    }),
-  )
+  const practiceTextsExport = practiceTexts.map((text) => ({
+    id: text.id,
+    title: text.title,
+    category: practiceCategoryToAndroid(text.category as PracticeCategory),
+    description: text.description ?? null,
+    fileName: text.fileName ?? null,
+    mimeType: text.mimeType ?? null,
+    filePath: null,
+    createdAt: toEpochMs(text.createdAt),
+  }))
 
   const payload: BackupPayload = {
     exportVersion: EXPORT_VERSION,

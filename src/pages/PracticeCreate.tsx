@@ -1,11 +1,9 @@
-import { useParams, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { PracticeForm } from '../components/practice/PracticeForm'
 
-export function PracticeEdit() {
-  const { id } = useParams<{ id: string }>()
+export function PracticeCreate() {
   const navigate = useNavigate()
-  const practiceId = Number(id)
 
   return (
     <>
@@ -14,13 +12,10 @@ export function PracticeEdit() {
           <ArrowLeft className="h-5 w-5" />
         </button>
         <h1 className="font-display flex-1 text-xl font-semibold text-[var(--color-primary)]">
-          Редактирование
+          Новая практика
         </h1>
       </div>
-      <PracticeForm
-        practiceId={practiceId}
-        onDone={() => navigate(`/practices/${practiceId}`)}
-      />
+      <PracticeForm onDone={() => navigate('/practices')} />
     </>
   )
 }
