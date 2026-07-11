@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
@@ -6,6 +6,9 @@ import { ArrowLeft, Trash2, Pencil } from 'lucide-react'
 import { TransmissionForm } from '../components/transmission/TransmissionForm'
 import { TRANSMISSION_TYPE_LABELS } from '../lib/types'
 import { useTransmissionStore } from '../store/transmissionStore'
+import { ConfirmDialog } from '../components/ui/ConfirmDialog'
+
+const DELETE_CONFIRM_MESSAGE = 'Вы действительно хотите удалить запись?'
 
 export function TransmissionDetail() {
   const { id } = useParams<{ id: string }>()
@@ -16,6 +19,7 @@ export function TransmissionDetail() {
 
   const transmissionId = Number(id)
   const transmission = transmissions.find((t) => t.id === transmissionId)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   useEffect(() => {
     loadTransmissions()
@@ -35,9 +39,6 @@ export function TransmissionDetail() {
   const date = transmission.date instanceof Date ? transmission.date : new Date(transmission.date)
 
   const handleDelete = async () => {
-    if (!confirm(`Удалить передачу «${transmission.name}»? Действие необратимо.`)) {
-      return
-    }
     await deleteTransmission(transmissionId)
     navigate('/transmissions')
   }
@@ -58,7 +59,12 @@ export function TransmissionDetail() {
         >
           <Pencil className="h-5 w-5" />
         </Link>
-        <button type="button" onClick={handleDelete} className="p-1 text-[var(--text-muted)]" aria-label="Удалить">
+        <button
+          type="button"
+          onClick={() => setShowDeleteConfirm(true)}
+          className="p-1 text-[var(--text-muted)]"
+          aria-label="Удалить"
+        >
           <Trash2 className="h-5 w-5" />
         </button>
       </div>
@@ -97,6 +103,13 @@ export function TransmissionDetail() {
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        message={DELETE_CONFIRM_MESSAGE}
+        onConfirm={() => void handleDelete()}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     </>
   )
 }

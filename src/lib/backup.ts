@@ -1,6 +1,6 @@
 import { db } from './db'
 import type { Dream, Practice, PracticeSession, Transmission } from './db'
-import { blobToBase64, base64ToBlob } from '../store/practiceTextStore'
+import { base64ToBlob } from '../store/practiceTextStore'
 import type { AppSettings } from '../store/settingsStore'
 import {
   dreamCategoryFromAndroid,

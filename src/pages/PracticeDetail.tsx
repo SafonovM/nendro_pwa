@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-
 import { ArrowLeft, Trash2, Pencil } from 'lucide-react'
 import { AddSessionDialog } from '../components/practice/AddSessionDialog'
 import { PracticeHistorySection } from '../components/practice/PracticeHistorySection'
+import { PracticeVisualizationSection } from '../components/practice/PracticeVisualizationSection'
+import { VirtualMalaCounter } from '../components/practice/VirtualMalaCounter'
 import { GradientCircularProgress } from '../components/ui/GradientCircularProgress'
 import { usePracticeStore, getPracticeStats } from '../store/practiceStore'
 import { useSettingsStore } from '../store/settingsStore'
@@ -15,7 +15,7 @@ import { formatPracticeCount } from '../lib/format'
 import type { PracticeSession } from '../lib/db'
 
 const MALA_BEAD_COUNT = 108
-const QUICK_ADD_AMOUNTS = [1, 27, 108]
+const QUICK_ADD_AMOUNTS = [27, 108]
 
 export function PracticeDetail() {
   const { id } = useParams<{ id: string }>()
@@ -32,7 +32,7 @@ export function PracticeDetail() {
   const [sessions, setSessions] = useState<PracticeSession[]>([])
   const [malaCountInRound, setMalaCountInRound] = useState(0)
   const [malaCompletedRounds, setMalaCompletedRounds] = useState(0)
-const QUICK_ADD_AMOUNTS = [27, 108]
+  const [showAddDialog, setShowAddDialog] = useState(false)
   const activeMalaSessionId = useRef<number | null>(null)
 
   const practiceId = Number(id)
@@ -117,6 +117,13 @@ const QUICK_ADD_AMOUNTS = [27, 108]
         <h1 className="font-display flex-1 truncate text-xl font-semibold text-[var(--color-primary)]">
           {practice.name}
         </h1>
+        <Link
+          to={`/practices/${practiceId}/edit`}
+          className="p-1 text-[var(--text-muted)]"
+          aria-label="Редактировать"
+        >
+          <Pencil className="h-5 w-5" />
+        </Link>
         <button type="button" onClick={handleDelete} aria-label="Удалить">
           <Trash2 className="h-5 w-5 text-[var(--text-muted)]" />
         </button>
