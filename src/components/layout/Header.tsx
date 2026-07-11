@@ -14,7 +14,7 @@ export function Header({ title, showLogo, showSettings }: HeaderProps) {
       <div className="flex items-center gap-3">
         {showLogo && <TibetanA size={36} />}
         {title && (
-          <h1 className="font-display flex-1 text-xl font-semibold text-[var(--color-primary)]">
+          <h1 className="text-title flex-1 text-[var(--color-primary)]">
             {title}
           </h1>
         )}

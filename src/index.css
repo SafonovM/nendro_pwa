@@ -1,26 +1,20 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #8B1A1A;
-  --color-accent: #D4A853;
+  --color-brand-red: #8B1A1A;
+  --color-brand-gold: #D4A853;
+  --color-brand-teal: #2D6A6A;
   --color-bg-light: #FAF5EB;
   --color-bg-dark: #1A1A2E;
   --color-surface-light: #FDF8F0;
   --color-surface-dark: #252540;
   --color-surface-variant-light: #F0E8DC;
   --color-surface-variant-dark: #3D3D58;
-  --color-text: #3C2415;
-  --color-secondary: #2D6A6A;
-  --color-silver: #C0C0C0;
-  --color-outline-light: #85746A;
-  --color-outline-dark: #9A8B7E;
-  --color-primary-container-light: #FFDAD6;
-  --color-primary-container-dark: #8B1A1A;
   --gradient-start: #8B1A1A;
   --gradient-end: #D4A853;
 
-  --font-display: "Playfair Display", Georgia, serif;
-  --font-sans: "Inter", system-ui, sans-serif;
+  --font-display: "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
 
   --radius-card: 16px;
   --radius-button: 12px;
@@ -28,35 +22,77 @@
 
 :root {
   color-scheme: light;
+
+  --color-primary: #8B1A1A;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #ffdad6;
+  --color-on-primary-container: #410002;
+
+  --color-secondary: #2d6a6a;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #b2dfdb;
+  --color-on-secondary-container: #002020;
+
+  --color-tertiary: #d4a853;
+  --color-accent: #d4a853;
+  --color-on-tertiary: #3c2415;
+  --color-tertiary-container: #ffe8b0;
+
   --bg: var(--color-bg-light);
   --surface: var(--color-surface-light);
   --surface-variant: var(--color-surface-variant-light);
-  --text: var(--color-text);
-  --text-muted: #6B5344;
-  --border: #E8DFD0;
-  --outline: var(--color-outline-light);
-  --primary-container: var(--color-primary-container-light);
+  --text: #3c2415;
+  --text-muted: #52443a;
+  --border: #e8dfd0;
+  --outline: #85746a;
   --shadow: 0 2px 12px rgba(60, 36, 21, 0.08);
+
+  --btn-primary-bg: var(--color-primary);
+  --btn-primary-fg: var(--color-on-primary);
+  --btn-secondary-fg: var(--color-primary);
+  --btn-secondary-border: var(--outline);
 }
 
 .dark {
   color-scheme: dark;
+
+  --color-primary: #ffb4ab;
+  --color-on-primary: #690005;
+  --color-primary-container: #8b1a1a;
+  --color-on-primary-container: #ffdad6;
+
+  --color-secondary: #80cbc4;
+  --color-on-secondary: #003737;
+  --color-secondary-container: #2d6a6a;
+  --color-on-secondary-container: #b2dfdb;
+
+  --color-tertiary: #d4a853;
+  --color-accent: #d4a853;
+  --color-on-tertiary: #3c2e00;
+  --color-tertiary-container: #5c4a1a;
+
   --bg: var(--color-bg-dark);
   --surface: var(--color-surface-dark);
   --surface-variant: var(--color-surface-variant-dark);
-  --text: #EDE0D4;
-  --text-muted: #B8A99A;
-  --border: #3A3A55;
-  --outline: var(--color-outline-dark);
-  --primary-container: var(--color-primary-container-dark);
+  --text: #ede0d4;
+  --text-muted: #d7c2b0;
+  --border: #3a3a55;
+  --outline: #a08d82;
   --shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+
+  --btn-primary-bg: var(--color-primary);
+  --btn-primary-fg: var(--color-on-primary);
+  --btn-secondary-fg: var(--color-primary);
+  --btn-secondary-border: var(--outline);
 }
 
 * {
   box-sizing: border-box;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   overflow: hidden;
 }
@@ -64,6 +100,9 @@ html, body, #root {
 body {
   margin: 0;
   font-family: var(--font-sans);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  letter-spacing: 0.015em;
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
@@ -71,6 +110,23 @@ body {
 
 .font-display {
   font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.text-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.375rem;
+  line-height: 1.75rem;
+}
+
+.text-label {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  letter-spacing: 0.006em;
 }
 
 .card {
@@ -81,25 +137,52 @@ body {
 }
 
 .btn-primary {
-  background: var(--color-primary);
-  color: white;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-fg);
+  border: none;
   border-radius: var(--radius-button);
   font-family: var(--font-sans);
   font-weight: 500;
-  transition: opacity 0.15s;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  letter-spacing: 0.006em;
+  transition: opacity 0.15s, filter 0.15s;
 }
 
 .btn-primary:active {
-  opacity: 0.85;
+  opacity: 0.88;
+  filter: brightness(0.95);
+}
+
+.btn-primary:disabled {
+  opacity: 0.38;
 }
 
 .btn-secondary {
   background: transparent;
-  color: var(--color-secondary);
-  border: 1px solid var(--color-secondary);
+  color: var(--btn-secondary-fg);
+  border: 1px solid var(--btn-secondary-border);
   border-radius: var(--radius-button);
   font-family: var(--font-sans);
   font-weight: 500;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  letter-spacing: 0.006em;
+  transition: background 0.15s;
+}
+
+.btn-secondary:active {
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+}
+
+.btn-text {
+  background: transparent;
+  color: var(--color-primary);
+  border: none;
+  border-radius: var(--radius-button);
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 0.875rem;
 }
 
 .splash-fade {
@@ -107,10 +190,22 @@ body {
 }
 
 @keyframes splashFade {
-  from { opacity: 1; }
-  to { opacity: 0; visibility: hidden; }
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
 }
 
 .safe-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+input,
+select,
+textarea,
+button {
+  font-family: inherit;
 }

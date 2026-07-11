@@ -14,14 +14,14 @@ export function TibetanA({ size = 48, className = '' }: TibetanAProps) {
       className={className}
       aria-hidden
     >
-      <rect width="100" height="100" rx="20" fill="#1A3A6B" />
+      <rect width="100" height="100" rx="20" fill="var(--color-primary-container)" />
       <text
         x="50"
         y="68"
         textAnchor="middle"
         fontSize="52"
-        fill="#D4A853"
-        fontFamily="serif"
+        fill="var(--color-tertiary)"
+        fontFamily="Playfair Display, Georgia, serif"
       >
         ཨ
       </text>

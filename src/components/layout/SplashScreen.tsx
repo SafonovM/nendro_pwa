@@ -20,7 +20,7 @@ export function SplashScreen({ onDone }: { onDone: () => void }) {
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-[var(--color-primary)] ${fade ? 'splash-fade' : ''}`}
+      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-[var(--color-primary-container)] ${fade ? 'splash-fade' : ''}`}
     >
       <img
         src={assetUrl('splash.svg')}
@@ -28,7 +28,7 @@ export function SplashScreen({ onDone }: { onDone: () => void }) {
         className="h-full w-full object-cover"
       />
       <div className="absolute bottom-16 text-center">
-        <p className="font-display text-2xl font-bold text-[#D4A853]">Юнгдрунг Бон</p>
+        <p className="font-display text-2xl font-semibold text-[var(--color-tertiary)]">Юнгдрунг Бон</p>
         <p className="mt-1 text-sm text-white/70">ཡུང་དྲུང་བོན</p>
       </div>
     </div>

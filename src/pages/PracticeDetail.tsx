@@ -412,7 +412,7 @@ export function PracticeDetail() {
 
             onClick={() => setShowAddDialog(true)}
 
-            className="btn-secondary mt-3 flex w-full items-center justify-center gap-2 px-4 py-2.5"
+            className="btn-text mt-3 flex w-full items-center justify-center gap-2 px-4 py-2.5"
 
           >
 
