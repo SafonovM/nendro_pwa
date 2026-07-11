@@ -8,7 +8,7 @@ interface DreamState {
   searchQuery: string
   setSearchQuery: (q: string) => void
   loadDreams: () => Promise<void>
-  addDream: (data: Omit<Dream, 'id'>) => Promise<void>
+  addDream: (data: Omit<Dream, 'id'>) => Promise<number>
   deleteDream: (id: number) => Promise<void>
   filteredDreams: () => Dream[]
 }
@@ -27,8 +27,9 @@ export const useDreamStore = create<DreamState>((set, get) => ({
   },
 
   addDream: async (data) => {
-    await db.dreams.add(data)
+    const id = (await db.dreams.add(data)) as number
     await get().loadDreams()
+    return id
   },
 
   deleteDream: async (id) => {

@@ -8,6 +8,7 @@ import { Practices } from './pages/Practices'
 import { PracticeDetail } from './pages/PracticeDetail'
 import { Transmissions } from './pages/Transmissions'
 import { Dreams } from './pages/Dreams'
+import { DreamDetail } from './pages/DreamDetail'
 import { PracticeTexts } from './pages/PracticeTexts'
 import { PracticeTextDetail, PracticeTextEdit } from './pages/PracticeTextDetail'
 import { Settings } from './pages/Settings'
@@ -54,6 +55,7 @@ export default function App() {
             <Route path="/practices/:id" element={<PracticeDetail />} />
             <Route path="/transmissions" element={<Transmissions />} />
             <Route path="/dreams" element={<Dreams />} />
+            <Route path="/dreams/:id" element={<DreamDetail />} />
             <Route path="/practice-texts" element={<PracticeTexts />} />
             <Route path="/practice-texts/:id/edit" element={<PracticeTextEdit />} />
             <Route path="/practice-texts/:id" element={<PracticeTextDetail />} />

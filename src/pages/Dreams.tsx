@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Plus, Search } from 'lucide-react'
 import { Header } from '../components/layout/Header'
 import { DreamList } from '../components/dreams/DreamList'
@@ -6,6 +7,7 @@ import { DreamForm } from '../components/dreams/DreamForm'
 import { useDreamStore } from '../store/dreamStore'
 
 export function Dreams() {
+  const navigate = useNavigate()
   const loadDreams = useDreamStore((s) => s.loadDreams)
   const searchQuery = useDreamStore((s) => s.searchQuery)
   const setSearchQuery = useDreamStore((s) => s.setSearchQuery)
@@ -32,7 +34,12 @@ export function Dreams() {
         </div>
       )}
       {showForm ? (
-        <DreamForm onDone={() => setShowForm(false)} />
+        <DreamForm
+          onDone={(dreamId) => {
+            setShowForm(false)
+            navigate(`/dreams/${dreamId}`)
+          }}
+        />
       ) : (
         <>
           <DreamList />

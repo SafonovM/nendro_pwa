@@ -1,13 +1,15 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { DREAM_CATEGORY_LABELS, type DreamCategory } from '../../lib/types'
 import { useDreamStore } from '../../store/dreamStore'
 import { VoiceInput } from './VoiceInput'
 
 interface DreamFormProps {
-  onDone?: () => void
+  onDone?: (dreamId: number) => void
 }
 
 export function DreamForm({ onDone }: DreamFormProps) {
+  const navigate = useNavigate()
   const addDream = useDreamStore((s) => s.addDream)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -18,7 +20,7 @@ export function DreamForm({ onDone }: DreamFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!description.trim()) return
-    await addDream({
+    const dreamId = await addDream({
       title: title.trim(),
       description: description.trim(),
       date: new Date(date),
@@ -29,7 +31,11 @@ export function DreamForm({ onDone }: DreamFormProps) {
     setTitle('')
     setDescription('')
     setEmotions('')
-    onDone?.()
+    if (onDone) {
+      onDone(dreamId)
+    } else {
+      navigate(`/dreams/${dreamId}`)
+    }
   }
 
   const inputClass =
