@@ -38,6 +38,10 @@ async function notifyClients(entry: AlarmScheduleEntry) {
   }
 }
 
+function getAlarmSoundUrl() {
+  return new URL('sounds/temple_gong.mp3', sw.registration.scope).toString()
+}
+
 export async function showAlarmNotification(entry: AlarmScheduleEntry) {
   await sw.registration.showNotification(entry.title, {
     body: entry.body,
@@ -45,6 +49,7 @@ export async function showAlarmNotification(entry: AlarmScheduleEntry) {
     vibrate: getVibrationPattern(entry.kind),
     silent: false,
     requireInteraction: true,
+    sound: getAlarmSoundUrl(),
     data: alarmDataFromEntry(entry),
   } as NotificationOptions)
 }

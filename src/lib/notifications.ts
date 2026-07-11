@@ -1,6 +1,6 @@
 import type { DreamYogaSlot } from './dreamYogaSchedule'
 import { assetUrl } from './assetUrl'
-import { startAlarmSound, stopAlarmSound, supportsAlarmSound } from './alarmSound'
+import { startAlarmSound, stopAlarmSound, supportsAlarmSound, getAlarmSoundUrl } from './alarmSound'
 
 export type AlarmKind = 'practice' | 'dream_yoga'
 
@@ -87,6 +87,7 @@ export async function showSystemNotification(alarm: ActiveAlarm) {
       vibrate,
       silent: false,
       requireInteraction: true,
+      sound: getAlarmSoundUrl(),
       data: { kind: alarm.kind, slot: alarm.slot, body: alarm.body, hint: alarm.hint },
     } as NotificationOptions)
   } else {

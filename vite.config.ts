@@ -17,7 +17,7 @@ export default defineConfig({
       srcDir: 'src',
       filename: 'sw.ts',
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'og-image.svg', 'splash.svg'],
+      includeAssets: ['favicon.svg', 'og-image.svg', 'splash.svg', 'sounds/temple_gong.mp3'],
       manifest: {
         name: 'Дневник практик Юнгдрунг Бон',
         short_name: 'Юнгдрунг Бон',
@@ -36,7 +36,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,svg,png,mp4,woff2}'],
+        globPatterns: ['**/*.{js,css,html,ico,svg,png,mp3,mp4,woff2}'],
         maximumFileSizeToCacheInBytes: 250 * 1024 * 1024,
       },
     }),
