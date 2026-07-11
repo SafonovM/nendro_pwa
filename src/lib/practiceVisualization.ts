@@ -2,7 +2,7 @@ import type { PractitionerGender, PracticeCategory } from './types'
 
 export interface PracticeVisualization {
   posterPath: string | null
-  videoPath: string | null
+  videoPaths: string[]
 }
 
 import { assetUrl } from './assetUrl'
@@ -25,23 +25,23 @@ export function resolveVisualization(
     case 'sale_o':
       return {
         posterPath: `${BASE}/sale_o/poster.png`,
-        videoPath: `${BASE}/sale_o/visualization.mp4`,
+        videoPaths: [`${BASE}/sale_o/visualization.mp4`],
       }
-    case 'ma_tri':
+    case 'ma_tri': {
+      const male = `${BASE}/ma_tri/male/visualization.mp4`
+      const female = `${BASE}/ma_tri/female/visualization.mp4`
       return {
         posterPath: `${BASE}/ma_tri/poster.png`,
-        videoPath:
-          gender === 'male'
-            ? `${BASE}/ma_tri/male/visualization.mp4`
-            : `${BASE}/ma_tri/female/visualization.mp4`,
+        videoPaths: gender === 'male' ? [male, female] : [female, male],
       }
+    }
     case 'du_tri_su':
       return {
         posterPath:
           gender === 'male'
             ? `${BASE}/du_tri_su/male/poster.png`
             : `${BASE}/du_tri_su/female/poster.png`,
-        videoPath: `${BASE}/du_tri_su/visualization.mp4`,
+        videoPaths: [`${BASE}/du_tri_su/visualization.mp4`],
       }
     default:
       return null

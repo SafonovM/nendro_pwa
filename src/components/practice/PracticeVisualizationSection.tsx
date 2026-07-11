@@ -6,39 +6,56 @@ interface PracticeVisualizationSectionProps {
   visualization: PracticeVisualization
 }
 
+function VideoPlayer({ src }: { src: string }) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video) return
+    video.loop = true
+    video.muted = true
+    video.playsInline = true
+    video.play().catch(() => {})
+  }, [src])
+
+  return (
+    <video
+      ref={videoRef}
+      src={src}
+      className="w-full rounded-xl"
+      controls
+      playsInline
+      muted
+      loop
+    />
+  )
+}
+
 export function PracticeVisualizationSection({ visualization }: PracticeVisualizationSectionProps) {
   const [posterOk, setPosterOk] = useState(false)
-  const [videoOk, setVideoOk] = useState(false)
-  const videoRef = useRef<HTMLVideoElement>(null)
+  const [availableVideos, setAvailableVideos] = useState<string[]>([])
 
   useEffect(() => {
     let cancelled = false
     async function check() {
-      const [p, v] = await Promise.all([
-        visualization.posterPath ? assetExists(visualization.posterPath) : false,
-        visualization.videoPath ? assetExists(visualization.videoPath) : false,
-      ])
+      const posterResult = visualization.posterPath
+        ? await assetExists(visualization.posterPath)
+        : false
+      const videoResults = await Promise.all(
+        visualization.videoPaths.map(async (path) => ((await assetExists(path)) ? path : null)),
+      )
       if (!cancelled) {
-        setPosterOk(p)
-        setVideoOk(v)
+        setPosterOk(posterResult)
+        setAvailableVideos(videoResults.filter((p): p is string => p != null))
       }
     }
     check()
     return () => {
       cancelled = true
     }
-  }, [visualization.posterPath, visualization.videoPath])
+  }, [visualization.posterPath, visualization.videoPaths])
 
-  useEffect(() => {
-    const video = videoRef.current
-    if (!video || !videoOk) return
-    video.loop = true
-    video.muted = true
-    video.playsInline = true
-    video.play().catch(() => {})
-  }, [videoOk, visualization.videoPath])
-
-  if (!posterOk && !videoOk) {
+  if (!posterOk && availableVideos.length === 0) {
     return (
       <div className="card p-4">
         <p className="text-sm text-[var(--text-muted)]">Визуализация недоступна</p>
@@ -57,17 +74,9 @@ export function PracticeVisualizationSection({ visualization }: PracticeVisualiz
             className="w-full rounded-xl object-cover"
           />
         )}
-        {videoOk && visualization.videoPath && (
-          <video
-            ref={videoRef}
-            src={visualization.videoPath}
-            className="w-full rounded-xl"
-            controls
-            playsInline
-            muted
-            loop
-          />
-        )}
+        {availableVideos.map((path) => (
+          <VideoPlayer key={path} src={path} />
+        ))}
       </div>
     </div>
   )
