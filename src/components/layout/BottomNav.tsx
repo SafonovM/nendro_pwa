@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
-import { Home, BookOpen, ScrollText, MoonStar, BookText } from 'lucide-react'
+import { Home, BookOpen, ScrollText, MoonStar, BookText, CirclePlus } from 'lucide-react'
+import { useSanghaAccumulationStore } from '../../store/sanghaAccumulationStore'
 
 const navItems = [
   { to: '/', icon: Home, label: 'Главная' },
@@ -10,10 +11,18 @@ const navItems = [
 ]
 
 export function BottomNav() {
+  const showAccumulation = useSanghaAccumulationStore(
+    (s) => s.accessVerified && Boolean(s.scriptUrl.trim()),
+  )
+
+  const items = showAccumulation
+    ? [...navItems, { to: '/accumulation', icon: CirclePlus, label: 'Накопление' }]
+    : navItems
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur-sm safe-bottom">
       <div className="mx-auto flex max-w-lg items-stretch justify-around px-1 py-2">
-        {navItems.map(({ to, icon: Icon, label }) => (
+        {items.map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}
             to={to}

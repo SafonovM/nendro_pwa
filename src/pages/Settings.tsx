@@ -1,8 +1,13 @@
 import { useRef, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
-import { Download, Upload, Bell, Moon, Smartphone } from 'lucide-react'
+import { Download, Upload, Bell, Moon, Smartphone, CirclePlus } from 'lucide-react'
 import { Header } from '../components/layout/Header'
 import { useSettingsStore, APP_VERSION } from '../store/settingsStore'
+import { useSanghaAccumulationStore } from '../store/sanghaAccumulationStore'
+import {
+  isLikelyAppsScriptUrl,
+  verifySanghaScriptAccess,
+} from '../lib/sanghaAccumulation'
 import { usePracticeStore } from '../store/practiceStore'
 import { useTransmissionStore } from '../store/transmissionStore'
 import { useDreamStore } from '../store/dreamStore'
@@ -64,6 +69,48 @@ export function Settings() {
   const loadTexts = usePracticeTextStore((s) => s.loadTexts)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isExporting, setIsExporting] = useState(false)
+
+  const sanghaScriptUrl = useSanghaAccumulationStore((s) => s.scriptUrl)
+  const sanghaAccessVerified = useSanghaAccumulationStore((s) => s.accessVerified)
+  const setSanghaScriptUrl = useSanghaAccumulationStore((s) => s.setScriptUrl)
+  const setSanghaAccessVerified = useSanghaAccumulationStore((s) => s.setAccessVerified)
+  const clearSanghaAccess = useSanghaAccumulationStore((s) => s.clearAccess)
+  const [sanghaUrlDraft, setSanghaUrlDraft] = useState(sanghaScriptUrl)
+  const [sanghaChecking, setSanghaChecking] = useState(false)
+  const [sanghaStatus, setSanghaStatus] = useState<string | null>(
+    sanghaAccessVerified ? 'Доступ подтверждён. Вкладка «Накопление» доступна.' : null,
+  )
+
+  const handleSanghaVerify = async () => {
+    const url = sanghaUrlDraft.trim()
+    setSanghaScriptUrl(url)
+    setSanghaStatus(null)
+
+    if (!url) {
+      clearSanghaAccess()
+      setSanghaStatus('Ссылка очищена. Вкладка скрыта.')
+      return
+    }
+    if (!isLikelyAppsScriptUrl(url)) {
+      setSanghaAccessVerified(false)
+      setSanghaStatus('Нужна ссылка вида script.google.com/macros/s/.../exec')
+      return
+    }
+
+    setSanghaChecking(true)
+    try {
+      const practices = await verifySanghaScriptAccess(url)
+      setSanghaAccessVerified(true)
+      setSanghaStatus(
+        `Доступ подтверждён. Найдено практик: ${practices.length}. Вкладка «Накопление» появилась внизу.`,
+      )
+    } catch (err) {
+      setSanghaAccessVerified(false)
+      setSanghaStatus(err instanceof Error ? err.message : 'Проверка не удалась')
+    } finally {
+      setSanghaChecking(false)
+    }
+  }
 
   const handleExport = async () => {
     if (isExporting) return
@@ -298,6 +345,61 @@ export function Settings() {
               className="hidden"
             />
           </div>
+        </section>
+
+        <section className="card p-4">
+          <div className="mb-3 flex items-center gap-2">
+            <CirclePlus className="h-5 w-5 text-[var(--color-primary)]" />
+            <h3 className="font-medium">Накопление сангхи</h3>
+          </div>
+          <p className="mb-3 text-sm text-[var(--text-muted)]">
+            Ссылка на Google Apps Script (`.../exec`). После успешной проверки
+            внизу появится вкладка «Накопление».
+          </p>
+          <input
+            type="url"
+            value={sanghaUrlDraft}
+            onChange={(e) => {
+              setSanghaUrlDraft(e.target.value)
+              setSanghaStatus(null)
+            }}
+            placeholder="https://script.google.com/macros/s/.../exec"
+            className={inputClass}
+          />
+          <div className="mt-3 flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => void handleSanghaVerify()}
+              disabled={sanghaChecking}
+              className="btn-secondary flex items-center justify-center gap-2 px-4 py-2.5 disabled:opacity-60"
+            >
+              {sanghaChecking ? 'Проверяем…' : 'Проверить доступ'}
+            </button>
+            {sanghaAccessVerified && (
+              <button
+                type="button"
+                onClick={() => {
+                  clearSanghaAccess()
+                  setSanghaUrlDraft('')
+                  setSanghaStatus('Подключение отключено. Вкладка скрыта.')
+                }}
+                className="px-4 py-2 text-sm text-[var(--text-muted)] underline"
+              >
+                Отключить
+              </button>
+            )}
+          </div>
+          {sanghaStatus && (
+            <p
+              className={`mt-3 text-sm ${
+                sanghaAccessVerified
+                  ? 'text-emerald-700 dark:text-emerald-300'
+                  : 'text-[var(--text-muted)]'
+              }`}
+            >
+              {sanghaStatus}
+            </p>
+          )}
         </section>
 
         <section className="card p-4">

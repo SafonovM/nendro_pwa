@@ -16,6 +16,7 @@ import { DreamEdit } from './pages/DreamEdit'
 import { PracticeTexts } from './pages/PracticeTexts'
 import { PracticeTextDetail, PracticeTextEdit } from './pages/PracticeTextDetail'
 import { Settings } from './pages/Settings'
+import { SanghaAccumulation } from './pages/SanghaAccumulation'
 import { useSettingsStore } from './store/settingsStore'
 import { useAlarmScheduler } from './hooks/useAlarmScheduler'
 import type { ActiveAlarm } from './lib/notifications'
@@ -68,6 +69,7 @@ function AppRoutes({
           <Route path="/practice-texts" element={<PracticeTexts />} />
           <Route path="/practice-texts/:id/edit" element={<PracticeTextEdit />} />
           <Route path="/practice-texts/:id" element={<PracticeTextDetail />} />
+          <Route path="/accumulation" element={<SanghaAccumulation />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
       </Routes>
