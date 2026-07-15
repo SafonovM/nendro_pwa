@@ -14,6 +14,7 @@ interface SpeechRecognitionInstance extends EventTarget {
   continuous: boolean
   interimResults: boolean
   lang: string
+  onstart: (() => void) | null
   onresult: ((event: SpeechRecognitionEvent) => void) | null
   onerror: ((event: SpeechRecognitionErrorEvent) => void) | null
   onend: (() => void) | null
@@ -42,6 +43,8 @@ interface UseVoiceInputOptions {
   lang?: string
 }
 
+const FINAL_DEDUPE_MS = 1500
+
 export function useVoiceInput({
   onFinalTranscript,
   onInterimTranscript,
@@ -55,9 +58,35 @@ export function useVoiceInput({
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null)
   const onFinalRef = useRef(onFinalTranscript)
   const onInterimRef = useRef(onInterimTranscript)
+  const processedFinalIndicesRef = useRef(new Set<number>())
+  const lastFinalRef = useRef({ text: '', at: 0 })
+  const wantsRecordingRef = useRef(false)
 
   onFinalRef.current = onFinalTranscript
   onInterimRef.current = onInterimTranscript
+
+  const resetSession = useCallback(() => {
+    processedFinalIndicesRef.current.clear()
+    lastFinalRef.current = { text: '', at: 0 }
+    setInterimText('')
+    onInterimRef.current?.('')
+  }, [])
+
+  const emitFinal = useCallback((raw: string) => {
+    const trimmed = raw.trim()
+    if (!trimmed) return
+
+    const now = Date.now()
+    const last = lastFinalRef.current
+    if (last.text === trimmed && now - last.at < FINAL_DEDUPE_MS) {
+      return
+    }
+    lastFinalRef.current = { text: trimmed, at: now }
+
+    setInterimText('')
+    onInterimRef.current?.('')
+    onFinalRef.current?.(trimmed)
+  }, [])
 
   useEffect(() => {
     const SpeechRecognitionAPI = getSpeechRecognitionApi()
@@ -69,15 +98,25 @@ export function useVoiceInput({
     instance.interimResults = true
     instance.lang = lang
 
+    instance.onstart = () => {
+      setIsRecording(true)
+      setError(null)
+    }
+
     instance.onresult = (event) => {
       let interim = ''
-      let finalChunk = ''
+      const newFinalParts: string[] = []
 
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const result = event.results[i]
         const transcript = result[0]?.transcript ?? ''
+        if (!transcript) continue
+
         if (result.isFinal) {
-          finalChunk += transcript
+          if (!processedFinalIndicesRef.current.has(i)) {
+            processedFinalIndicesRef.current.add(i)
+            newFinalParts.push(transcript)
+          }
         } else {
           interim += transcript
         }
@@ -86,15 +125,15 @@ export function useVoiceInput({
       setInterimText(interim)
       onInterimRef.current?.(interim)
 
-      const trimmedFinal = finalChunk.trim()
-      if (trimmedFinal) {
-        setInterimText('')
-        onInterimRef.current?.('')
-        onFinalRef.current?.(trimmedFinal)
+      if (newFinalParts.length > 0) {
+        for (const part of newFinalParts) {
+          emitFinal(part)
+        }
       }
     }
 
     instance.onerror = (event) => {
+      wantsRecordingRef.current = false
       setIsRecording(false)
       setInterimText('')
       onInterimRef.current?.('')
@@ -115,18 +154,21 @@ export function useVoiceInput({
       setIsRecording(false)
       setInterimText('')
       onInterimRef.current?.('')
+      wantsRecordingRef.current = false
     }
 
     recognitionRef.current = instance
 
     return () => {
+      wantsRecordingRef.current = false
+      instance.onstart = null
       instance.onresult = null
       instance.onerror = null
       instance.onend = null
       instance.abort()
       recognitionRef.current = null
     }
-  }, [lang])
+  }, [emitFinal, lang])
 
   const clearError = useCallback(() => setError(null), [])
 
@@ -149,18 +191,19 @@ export function useVoiceInput({
 
     try {
       setError(null)
-      setInterimText('')
-      onInterimRef.current?.('')
+      resetSession()
+      wantsRecordingRef.current = true
       recognitionRef.current?.abort()
       recognitionRef.current?.start()
-      setIsRecording(true)
     } catch {
+      wantsRecordingRef.current = false
       setError('Не удалось начать запись')
       setIsRecording(false)
     }
-  }, [])
+  }, [resetSession])
 
   const stop = useCallback(() => {
+    wantsRecordingRef.current = false
     recognitionRef.current?.stop()
     setIsRecording(false)
     setInterimText('')
