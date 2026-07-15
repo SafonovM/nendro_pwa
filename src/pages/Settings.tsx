@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
-import { Download, Upload, Bell, Moon } from 'lucide-react'
+import { Download, Upload, Bell, Moon, Smartphone } from 'lucide-react'
 import { Header } from '../components/layout/Header'
 import { useSettingsStore, APP_VERSION } from '../store/settingsStore'
 import { usePracticeStore } from '../store/practiceStore'
@@ -298,6 +298,26 @@ export function Settings() {
               className="hidden"
             />
           </div>
+        </section>
+
+        <section className="card p-4">
+          <div className="mb-3 flex items-center gap-2">
+            <Smartphone className="h-5 w-5 text-[var(--color-primary)]" />
+            <h3 className="font-medium">Android-приложение</h3>
+          </div>
+          <p className="mb-3 text-sm text-[var(--text-muted)]">
+            В Android-версии больше возможностей. Данные можно перенести между
+            приложениями через экспорт и импорт JSON-бэкапа.
+          </p>
+          <a
+            href="https://disk.yandex.ru/d/3ZDKeDMVVI7U4Q"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-secondary flex items-center justify-center gap-2 px-4 py-2.5"
+          >
+            <Download className="h-4 w-4" />
+            Скачать APK
+          </a>
         </section>
 
         <p className="pb-4 text-center text-xs text-[var(--text-muted)]">
