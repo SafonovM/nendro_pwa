@@ -50,6 +50,7 @@ interface PracticeState {
   quickAddSession: (practiceId: number, count: number) => Promise<AddSessionResult>
   addMalaRepetition: (practiceId: number, activeSessionId: number | null) => Promise<MalaTapResult>
   getSessions: (practiceId: number) => Promise<PracticeSession[]>
+  deleteSession: (sessionId: number) => Promise<void>
 }
 
 async function finalizeAdd(practiceId: number, addedCount: number): Promise<AddSessionResult> {
@@ -162,6 +163,21 @@ export const usePracticeStore = create<PracticeState>((set, get) => ({
 
   getSessions: async (practiceId) => {
     return db.practiceSessions.where('practiceId').equals(practiceId).reverse().sortBy('date')
+  },
+
+  deleteSession: async (sessionId) => {
+    await db.transaction('rw', db.practiceSessions, db.practices, async () => {
+      const session = await db.practiceSessions.get(sessionId)
+      if (!session) return
+      await db.practiceSessions.delete(sessionId)
+      const practice = await db.practices.get(session.practiceId)
+      if (practice) {
+        await db.practices.update(session.practiceId, {
+          completedCount: Math.max(0, practice.completedCount - session.count),
+        })
+      }
+    })
+    await get().loadPractices()
   },
 }))
 

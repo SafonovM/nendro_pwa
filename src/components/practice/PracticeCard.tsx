@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ChevronRight, Trash2 } from 'lucide-react'
 import type { Practice } from '../../lib/db'
+import { formatCompletionPercent } from '../../lib/format'
 import { getPracticeTitle } from '../../lib/types'
 import { getPracticeStats } from '../../store/practiceStore'
 import { ProgressBar } from '../ui/ProgressBar'
@@ -41,7 +42,7 @@ export function PracticeCard({ practice, onDelete }: PracticeCardProps) {
               {practice.completedCount.toLocaleString('ru-RU')} /{' '}
               {practice.targetCount.toLocaleString('ru-RU')}
             </span>
-            <span>{completionPercent.toFixed(1)}%</span>
+            <span>{formatCompletionPercent(practice.completedCount, practice.targetCount)}%</span>
           </div>
           <p className="mt-1 text-xs text-[var(--text-muted)]">
             Осталось: {remaining.toLocaleString('ru-RU')}

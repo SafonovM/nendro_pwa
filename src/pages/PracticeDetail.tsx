@@ -14,7 +14,7 @@ import { hasVisualization, resolveVisualization, resolveCustomVisualization } fr
 import { getPracticeMedia, mediaToObjectUrl } from '../lib/practiceMedia'
 import type { PracticeVisualization } from '../lib/practiceVisualization'
 import { getTodayCount, groupSessionsByMonth } from '../lib/backup'
-import { formatPracticeCount } from '../lib/format'
+import { formatCompletionPercent, formatPracticeCount } from '../lib/format'
 import type { PracticeSession } from '../lib/db'
 
 const MALA_BEAD_COUNT = 108
@@ -31,6 +31,7 @@ export function PracticeDetail() {
   const addSession = usePracticeStore((s) => s.addSession)
   const getSessions = usePracticeStore((s) => s.getSessions)
   const deletePractice = usePracticeStore((s) => s.deletePractice)
+  const deleteSession = usePracticeStore((s) => s.deleteSession)
   const practitionerGender = useSettingsStore((s) => s.practitionerGender)
 
   const [sessions, setSessions] = useState<PracticeSession[]>([])
@@ -39,6 +40,9 @@ export function PracticeDetail() {
   const [malaCompletedRounds, setMalaCompletedRounds] = useState(0)
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [malaSeriesCount, setMalaSeriesCount] = useState(0)
+  const [showUndoMalaConfirm, setShowUndoMalaConfirm] = useState(false)
+  const [sessionToDelete, setSessionToDelete] = useState<PracticeSession | null>(null)
   const activeMalaSessionId = useRef<number | null>(null)
 
   const practiceId = Number(id)
@@ -119,9 +123,18 @@ export function PracticeDetail() {
     navigate('/practices')
   }
 
+  const resetMalaSeries = () => {
+    activeMalaSessionId.current = null
+    setMalaSeriesCount(0)
+    setMalaCountInRound(0)
+    setMalaCompletedRounds(0)
+  }
+
   const handleMalaTap = async () => {
-    const result = await addMalaRepetition(practiceId, activeMalaSessionId.current)
+    const previousSessionId = activeMalaSessionId.current
+    const result = await addMalaRepetition(practiceId, previousSessionId)
     activeMalaSessionId.current = result.sessionId
+    setMalaSeriesCount((prev) => (previousSessionId === result.sessionId ? prev + 1 : 1))
 
     setMalaCountInRound((prev) => {
       const next = prev >= MALA_BEAD_COUNT ? 1 : prev + 1
@@ -134,14 +147,33 @@ export function PracticeDetail() {
     await reloadSessions()
   }
 
+  const handleUndoMalaSeries = async () => {
+    setShowUndoMalaConfirm(false)
+    const sessionId = activeMalaSessionId.current
+    resetMalaSeries()
+    if (sessionId != null) await deleteSession(sessionId)
+    await reloadSessions()
+  }
+
+  const handleDeleteSession = async () => {
+    const session = sessionToDelete
+    setSessionToDelete(null)
+    if (session?.id == null) return
+    if (session.id === activeMalaSessionId.current) resetMalaSeries()
+    await deleteSession(session.id)
+    await reloadSessions()
+  }
+
   const handleQuickAdd = async (amount: number) => {
     activeMalaSessionId.current = null
+    setMalaSeriesCount(0)
     await quickAddSession(practiceId, amount)
     await reloadSessions()
   }
 
   const handleAddSession = async (count: number, date: Date, note: string) => {
     activeMalaSessionId.current = null
+    setMalaSeriesCount(0)
     await addSession(practiceId, count, date, note)
     await reloadSessions()
   }
@@ -180,7 +212,7 @@ export function PracticeDetail() {
           <div className="mt-4">
             <GradientCircularProgress percent={completionPercent}>
               <p className="text-2xl font-bold text-[var(--color-primary)]">
-                {completionPercent.toFixed(0)}%
+                {formatCompletionPercent(practice.completedCount, practice.targetCount)}%
               </p>
               <p className="text-xs text-[var(--text-muted)]">
                 {formatPracticeCount(practice.completedCount)} /{' '}
@@ -231,6 +263,8 @@ export function PracticeDetail() {
           countInRound={malaCountInRound}
           completedRounds={malaCompletedRounds}
           onTap={handleMalaTap}
+          seriesCount={malaSeriesCount}
+          onUndoSeries={() => setShowUndoMalaConfirm(true)}
         />
 
         <div className="card mt-4 p-4">
@@ -271,7 +305,7 @@ export function PracticeDetail() {
           ))}
         </div>
 
-        <PracticeHistorySection groups={historyGroups} />
+        <PracticeHistorySection groups={historyGroups} onDeleteSession={setSessionToDelete} />
       </div>
 
       <AddSessionDialog
@@ -285,6 +319,20 @@ export function PracticeDetail() {
         message={DELETE_CONFIRM_MESSAGE}
         onConfirm={() => void handleDelete()}
         onCancel={() => setShowDeleteConfirm(false)}
+      />
+
+      <ConfirmDialog
+        open={showUndoMalaConfirm}
+        message={`Удалить повторения, записанные с чёток (${formatPracticeCount(malaSeriesCount)})?`}
+        onConfirm={() => void handleUndoMalaSeries()}
+        onCancel={() => setShowUndoMalaConfirm(false)}
+      />
+
+      <ConfirmDialog
+        open={sessionToDelete != null}
+        message={`Удалить подход на ${formatPracticeCount(sessionToDelete?.count ?? 0)} повторений?`}
+        onConfirm={() => void handleDeleteSession()}
+        onCancel={() => setSessionToDelete(null)}
       />
     </>
   )

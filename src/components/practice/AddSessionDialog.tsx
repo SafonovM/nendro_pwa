@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { startOfDay } from '../../lib/dates'
 
 interface AddSessionDialogProps {
@@ -7,19 +7,42 @@ interface AddSessionDialogProps {
   onConfirm: (count: number, date: Date, note: string) => void
 }
 
+function toLocalDateInput(date: Date = new Date()): string {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+function fromLocalDateInput(value: string): Date {
+  const [y, m, d] = value.split('-').map(Number)
+  if (!y || !m || !d) return startOfDay()
+  return new Date(y, m - 1, d)
+}
+
 export function AddSessionDialog({ open, onClose, onConfirm }: AddSessionDialogProps) {
-  const [count, setCount] = useState(1)
-  const [date, setDate] = useState(() => startOfDay().toISOString().slice(0, 10))
+  const [countInput, setCountInput] = useState('1')
+  const [date, setDate] = useState(() => toLocalDateInput())
   const [note, setNote] = useState('')
+
+  useEffect(() => {
+    if (!open) return
+    setCountInput('1')
+    setNote('')
+    setDate(toLocalDateInput())
+  }, [open])
 
   if (!open) return null
 
+  const count = Number(countInput)
+  const isCountValid = countInput !== '' && Number.isSafeInteger(count) && count > 0
+
   const handleConfirm = () => {
-    if (count <= 0) return
-    onConfirm(count, startOfDay(new Date(date)), note)
-    setCount(1)
+    if (!isCountValid) return
+    onConfirm(count, startOfDay(fromLocalDateInput(date)), note)
+    setCountInput('1')
     setNote('')
-    setDate(startOfDay().toISOString().slice(0, 10))
+    setDate(toLocalDateInput())
     onClose()
   }
 
@@ -32,10 +55,13 @@ export function AddSessionDialog({ open, onClose, onConfirm }: AddSessionDialogP
 
         <label className="mb-1 block text-sm text-[var(--text-muted)]">Количество</label>
         <input
-          type="number"
-          min={1}
-          value={count}
-          onChange={(e) => setCount(Math.max(1, Number(e.target.value) || 1))}
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          autoComplete="off"
+          value={countInput}
+          onChange={(e) => setCountInput(e.target.value.replace(/\D/g, '').slice(0, 9))}
+          onFocus={(e) => e.target.select()}
           className="mb-3 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm"
         />
 
@@ -56,7 +82,12 @@ export function AddSessionDialog({ open, onClose, onConfirm }: AddSessionDialogP
         />
 
         <div className="flex gap-2">
-          <button type="button" onClick={handleConfirm} className="btn-primary flex-1 px-4 py-2.5">
+          <button
+            type="button"
+            onClick={handleConfirm}
+            disabled={!isCountValid}
+            className="btn-primary flex-1 px-4 py-2.5 disabled:opacity-50"
+          >
             Добавить
           </button>
           <button type="button" onClick={onClose} className="btn-secondary flex-1 px-4 py-2.5">

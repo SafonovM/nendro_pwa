@@ -336,6 +336,7 @@ export function getTodayCount(sessions: PracticeSession[], practiceId: number): 
 export interface DailyHistoryEntry {
   date: Date
   count: number
+  sessions: PracticeSession[]
 }
 
 export interface MonthlyHistoryGroup {
@@ -346,18 +347,21 @@ export interface MonthlyHistoryGroup {
 }
 
 export function groupSessionsByMonth(sessions: PracticeSession[]): MonthlyHistoryGroup[] {
-  const byDay = new Map<number, number>()
+  const byDay = new Map<number, { count: number; sessions: PracticeSession[] }>()
   for (const s of sessions) {
     const dayKey = startOfDay(s.date).getTime()
-    byDay.set(dayKey, (byDay.get(dayKey) ?? 0) + s.count)
+    const entry = byDay.get(dayKey) ?? { count: 0, sessions: [] }
+    entry.count += s.count
+    entry.sessions.push(s)
+    byDay.set(dayKey, entry)
   }
 
   const byMonth = new Map<string, DailyHistoryEntry[]>()
-  for (const [dayKey, count] of byDay) {
+  for (const [dayKey, { count, sessions: daySessions }] of byDay) {
     const date = new Date(dayKey)
     const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
     const list = byMonth.get(monthKey) ?? []
-    list.push({ date, count })
+    list.push({ date, count, sessions: daySessions })
     byMonth.set(monthKey, list)
   }
 

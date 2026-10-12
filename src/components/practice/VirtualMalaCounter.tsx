@@ -1,16 +1,39 @@
 import { useCallback, useEffect, useRef } from 'react'
+import type { PointerEvent } from 'react'
+import { formatPracticeCount } from '../../lib/format'
 
 const MALA_BEAD_COUNT = 108
+const SCROLL_GUARD_MS = 400
+const TAP_MOVE_TOLERANCE_PX = 10
 
 interface VirtualMalaCounterProps {
   countInRound: number
   completedRounds: number
   onTap: () => void
+  seriesCount?: number
+  onUndoSeries?: () => void
 }
 
-export function VirtualMalaCounter({ countInRound, completedRounds, onTap }: VirtualMalaCounterProps) {
+export function VirtualMalaCounter({
+  countInRound,
+  completedRounds,
+  onTap,
+  seriesCount = 0,
+  onUndoSeries,
+}: VirtualMalaCounterProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const lastTapRef = useRef(0)
+  const lastScrollRef = useRef(0)
+  const pointerStartRef = useRef<{ x: number; y: number } | null>(null)
+  const pointerMovedRef = useRef(false)
+
+  useEffect(() => {
+    const onScroll = () => {
+      lastScrollRef.current = Date.now()
+    }
+    window.addEventListener('scroll', onScroll, { capture: true, passive: true })
+    return () => window.removeEventListener('scroll', onScroll, { capture: true })
+  }, [])
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current
@@ -78,8 +101,26 @@ export function VirtualMalaCounter({ countInRound, completedRounds, onTap }: Vir
     return () => observer.disconnect()
   }, [draw])
 
+  const handlePointerDown = (e: PointerEvent<HTMLButtonElement>) => {
+    pointerStartRef.current = { x: e.clientX, y: e.clientY }
+    pointerMovedRef.current = false
+  }
+
+  const handlePointerMove = (e: PointerEvent<HTMLButtonElement>) => {
+    const start = pointerStartRef.current
+    if (!start) return
+    if (Math.hypot(e.clientX - start.x, e.clientY - start.y) > TAP_MOVE_TOLERANCE_PX) {
+      pointerMovedRef.current = true
+    }
+  }
+
   const handleTap = () => {
     const now = Date.now()
+    const moved = pointerMovedRef.current
+    pointerStartRef.current = null
+    pointerMovedRef.current = false
+    if (moved) return
+    if (now - lastScrollRef.current < SCROLL_GUARD_MS) return
     if (now - lastTapRef.current < 500) return
     lastTapRef.current = now
     onTap()
@@ -95,6 +136,8 @@ export function VirtualMalaCounter({ countInRound, completedRounds, onTap }: Vir
       <button
         type="button"
         onClick={handleTap}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
         aria-label="Добавить одно повторение"
         className="relative mx-auto flex aspect-square w-full max-w-[320px] items-center justify-center rounded-[20px] bg-[var(--surface)]/55 transition-transform active:scale-[0.98]"
       >
@@ -111,6 +154,24 @@ export function VirtualMalaCounter({ countInRound, completedRounds, onTap }: Vir
           )}
         </div>
       </button>
+
+      {seriesCount > 0 && onUndoSeries && (
+        <div className="mt-3 flex items-center justify-between gap-2 rounded-xl border border-[var(--border)] px-3 py-2">
+          <p className="text-sm text-[var(--text-muted)]">
+            Записано с чёток:{' '}
+            <span className="font-medium tabular-nums text-[var(--color-primary)]">
+              {formatPracticeCount(seriesCount)}
+            </span>
+          </p>
+          <button
+            type="button"
+            onClick={onUndoSeries}
+            className="btn-secondary shrink-0 px-3 py-1.5 text-sm"
+          >
+            Отменить
+          </button>
+        </div>
+      )}
     </div>
   )
 }
